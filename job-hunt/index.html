@@ -75,7 +75,7 @@ nav.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:va
 
 /* ---------- kanban ---------- */
 .board{display:flex;gap:10px;overflow-x:auto;padding-bottom:14px;align-items:flex-start}
-.col{flex:0 0 216px;background:var(--sunken);border:1px solid var(--line-soft);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:9px;min-height:120px}
+.col{flex:0 0 206px;background:var(--sunken);border:1px solid var(--line-soft);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:9px;min-height:120px}
 .col.drop{outline:2px dashed var(--accent);outline-offset:-3px}
 .col-head{display:flex;align-items:center;gap:7px}
 .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
@@ -93,6 +93,17 @@ nav.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:va
 .chip.he{background:var(--crit-soft);color:var(--crit)}
 .chip.fit{background:var(--accent-soft);color:var(--accent-2)}
 .chip.stale{background:var(--crit-soft);color:var(--crit)}
+.archive{margin-top:4px;border:1px solid var(--line-soft);border-radius:var(--r);background:var(--sunken);overflow:hidden}
+.archive.drop{outline:2px dashed var(--s7);outline-offset:-3px}
+.archive-head{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;padding:11px 13px;cursor:pointer;text-align:left}
+.archive-head:hover{background:var(--surface-2)}
+.archive-head .col-name{color:var(--text-2)}
+.archive-head .col-n{margin-left:0}
+.archive-head .caret{margin-left:auto;color:var(--text-3);font-size:12px;font-family:var(--mono)}
+.arch-grid{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(214px,1fr));padding:0 11px 12px}
+.arch-grid .card{opacity:.72}
+.arch-grid .card:hover{opacity:1}
+.arch-hint{padding:0 13px 12px;color:var(--text-3);font-size:13px}
 .col-add{background:none;border:1px dashed var(--line);border-radius:8px;color:var(--text-3);padding:7px;cursor:pointer;font-size:13px}
 .col-add:hover{color:var(--accent);border-color:var(--accent)}
 .empty{color:var(--text-3);font-size:13px;padding:6px 2px}
@@ -279,7 +290,7 @@ function el(id){return document.getElementById(id)}
 
 /* ---------- состояние ---------- */
 const S = {
-  tab:"pipeline", jobs:[], profile:{...DEFAULT_PROFILE}, demoOff:false,
+  tab:"pipeline", archiveOpen:false, jobs:[], profile:{...DEFAULT_PROFILE}, demoOff:false,
   db:null, sample:null, downloads:null, ready:false,
   open:null, gen:{busy:false,text:"",err:"",kind:"cover",jobId:null,lang:"en"},
   parse:{busy:false,err:"",result:null},
@@ -356,7 +367,7 @@ function viewPipeline(){
   const banner = isDemoMode()
     ? `<div class="notice"><span><b>Это примеры</b> — чтобы показать, как выглядит заполненная доска. Твои вакансии заменят их автоматически.</span>
         <button class="btn sm" data-act="cleardemo">Убрать примеры</button></div>` : "";
-  const cols = STAGES.map(st=>{
+  const cols = STAGES.filter(st=>st.id!=="rejected").map(st=>{
     const list=jobs.filter(j=>j.stage===st.id).sort(byUrgency);
     return `<section class="col" data-stage="${st.id}">
       <div class="col-head"><span class="dot" style="background:${st.c}"></span>
@@ -365,7 +376,23 @@ function viewPipeline(){
       ${list.length?"":`<div class="empty">${esc(st.hint)}</div>`}
       ${st.id==="radar"?`<button class="col-add" data-act="tab" data-tab="add">+ вакансия</button>`:""}
     </section>`}).join("");
-  return banner+`<div class="board" id="board">${cols}</div>`;
+  return banner+`<div class="board" id="board">${cols}</div>`+archiveHTML(jobs);
+}
+function archiveHTML(jobs){
+  const list=jobs.filter(j=>j.stage==="rejected").sort((a,b)=>String(b.updated||"").localeCompare(String(a.updated||"")));
+  const open=S.archiveOpen;
+  return `<section class="archive" data-stage="rejected">
+    <button class="archive-head" data-act="archtoggle" aria-expanded="${open}">
+      <span class="dot" style="background:var(--s7)"></span>
+      <span class="col-name">Отказы и закрытые</span>
+      <span class="col-n">${list.length}</span>
+      <span class="caret">${open?"скрыть ▲":"показать ▼"}</span>
+    </button>
+    ${open ? (list.length
+        ? `<div class="arch-grid">${list.map(cardHTML).join("")}</div>`
+        : `<div class="arch-hint">Пока пусто. Перетащи сюда карточку, когда история закончится — цифры останутся в аналитике.</div>`)
+      : ""}
+  </section>`;
 }
 function byUrgency(a,b){
   const ad=a.nextDate||"9999", bd=b.nextDate||"9999";
@@ -612,7 +639,7 @@ function wire(){
     c.ondragstart=e=>{e.dataTransfer.setData("text/plain",c.dataset.id);c.classList.add("dragging")};
     c.ondragend=()=>c.classList.remove("dragging");
   });
-  document.querySelectorAll(".col").forEach(col=>{
+  document.querySelectorAll("[data-stage]").forEach(col=>{
     col.ondragover=e=>{e.preventDefault();col.classList.add("drop")};
     col.ondragleave=()=>col.classList.remove("drop");
     col.ondrop=e=>{e.preventDefault();col.classList.remove("drop");
@@ -637,6 +664,7 @@ document.addEventListener("click",async e=>{
   else if(act==="tab"){S.tab=t.dataset.tab;render()}
   else if(act==="preset"){S.radar[t.dataset.k]=t.dataset.v;render()}
   else if(act==="kind"){S.gen.kind=t.dataset.v;S.gen.text="";S.gen.err="";render()}
+  else if(act==="archtoggle"){S.archiveOpen=!S.archiveOpen;render()}
   else if(act==="cleardemo"){S.demoOff=true;putSettings();render()}
   else if(act==="stage"&&S.open){moveStage(S.open,t.dataset.v);}
   else if(act==="save"&&S.open){await saveDrawer()}
