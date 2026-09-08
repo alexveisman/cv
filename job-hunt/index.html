@@ -1,0 +1,823 @@
+<title>Israel PM Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=Heebo:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#f1f4f3; --surface:#ffffff; --surface-2:#e7ecea; --sunken:#e9eeed;
+  --line:#d2dbd8; --line-soft:#e2e9e7;
+  --text:#16211f; --text-2:#54615e; --text-3:#7f8c89;
+  --accent:#0E7C86; --accent-2:#0a5a62; --accent-soft:#d7eaec; --on-accent:#ffffff;
+  --good:#2F7A57; --good-soft:#dcefe4;
+  --warn:#9d5613; --warn-soft:#f6e5d2;
+  --crit:#a32f3b; --crit-soft:#f5dde0;
+  --s1:#8e9c98; --s2:#5d8a8b; --s3:#3d8288; --s4:#1c7b85; --s5:#0E7C86; --s6:#0a5a62; --s7:#a32f3b;
+  --shadow:0 1px 2px rgba(22,33,31,.06),0 8px 24px -16px rgba(22,33,31,.35);
+  --r:10px;
+  --mono:'IBM Plex Mono','SFMono-Regular',Menlo,monospace;
+  --body:'Public Sans','Heebo',system-ui,-apple-system,sans-serif;
+  --display:'Bricolage Grotesque','Heebo',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1413; --surface:#151e1d; --surface-2:#1d2827; --sunken:#111918;
+    --line:#2b3937; --line-soft:#222e2d;
+    --text:#e5eeec; --text-2:#a1b0ac; --text-3:#778783;
+    --accent:#3FB2BB; --accent-2:#68cdd4; --accent-soft:#123539; --on-accent:#06201f;
+    --good:#5cbb8c; --good-soft:#122c22;
+    --warn:#d79a52; --warn-soft:#2e2114;
+    --crit:#e0838d; --crit-soft:#2e1619;
+    --s1:#5c6a67; --s2:#3f6e70; --s3:#2f7e85; --s4:#379ba3; --s5:#3FB2BB; --s6:#68cdd4; --s7:#e0838d;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 26px -18px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1413; --surface:#151e1d; --surface-2:#1d2827; --sunken:#111918;
+  --line:#2b3937; --line-soft:#222e2d;
+  --text:#e5eeec; --text-2:#a1b0ac; --text-3:#778783;
+  --accent:#3FB2BB; --accent-2:#68cdd4; --accent-soft:#123539; --on-accent:#06201f;
+  --good:#5cbb8c; --good-soft:#122c22;
+  --warn:#d79a52; --warn-soft:#2e2114;
+  --crit:#e0838d; --crit-soft:#2e1619;
+  --s1:#5c6a67; --s2:#3f6e70; --s3:#2f7e85; --s4:#379ba3; --s5:#3FB2BB; --s6:#68cdd4; --s7:#e0838d;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 26px -18px rgba(0,0,0,.9);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- shell ---------- */
+.shell{max-width:1400px;margin:0 auto;padding:20px 20px 64px}
+.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 18px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--display);font-weight:800;font-size:23px;letter-spacing:-.02em;margin:0}
+.brand span{color:var(--accent)}
+.statline{font-family:var(--mono);font-size:12.5px;color:var(--text-2);font-variant-numeric:tabular-nums;display:flex;flex-wrap:wrap;gap:4px 14px}
+.statline b{color:var(--text);font-weight:600}
+.top-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+nav.tabs{display:flex;gap:2px;overflow-x:auto;margin:14px 0 18px;padding-bottom:2px}
+nav.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 13px;color:var(--text-2);font-weight:500;cursor:pointer;white-space:nowrap;font-size:14px}
+nav.tabs button:hover{color:var(--text)}
+nav.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+
+.btn{background:var(--accent);color:var(--on-accent);border:0;border-radius:8px;padding:8px 14px;font-weight:600;font-size:14px;cursor:pointer}
+.btn:hover{background:var(--accent-2)}
+.btn.ghost{background:transparent;color:var(--text-2);border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--surface-2);color:var(--text)}
+.btn.sm{padding:5px 10px;font-size:13px;border-radius:7px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.notice{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--warn-soft);color:var(--warn);
+  border:1px solid color-mix(in srgb,var(--warn) 28%,transparent);border-radius:var(--r);padding:9px 13px;font-size:13.5px;margin-bottom:14px}
+.notice .btn{background:var(--warn);color:var(--surface)}
+
+/* ---------- kanban ---------- */
+.board{display:flex;gap:10px;overflow-x:auto;padding-bottom:14px;align-items:flex-start}
+.col{flex:0 0 216px;background:var(--sunken);border:1px solid var(--line-soft);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:9px;min-height:120px}
+.col.drop{outline:2px dashed var(--accent);outline-offset:-3px}
+.col-head{display:flex;align-items:center;gap:7px}
+.dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+.col-name{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-2)}
+.col-n{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--text-3);font-variant-numeric:tabular-nums}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 11px;cursor:pointer;
+  display:flex;flex-direction:column;gap:5px;border-left:3px solid var(--stage,var(--s1))}
+.card:hover{border-color:var(--accent);box-shadow:var(--shadow)}
+.card.dragging{opacity:.4}
+.card-role{font-weight:600;font-size:14px;line-height:1.3;overflow-wrap:anywhere}
+.card-co{font-size:13px;color:var(--text-2);overflow-wrap:anywhere}
+.card-meta{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:1px}
+.chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;padding:2px 6px;border-radius:5px;background:var(--surface-2);color:var(--text-2);white-space:nowrap}
+.chip.demo{background:var(--warn-soft);color:var(--warn)}
+.chip.he{background:var(--crit-soft);color:var(--crit)}
+.chip.fit{background:var(--accent-soft);color:var(--accent-2)}
+.chip.stale{background:var(--crit-soft);color:var(--crit)}
+.col-add{background:none;border:1px dashed var(--line);border-radius:8px;color:var(--text-3);padding:7px;cursor:pointer;font-size:13px}
+.col-add:hover{color:var(--accent);border-color:var(--accent)}
+.empty{color:var(--text-3);font-size:13px;padding:6px 2px}
+
+/* ---------- panels / forms ---------- */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.panel + .panel{margin-top:14px}
+.panel h2{font-family:var(--display);font-size:19px;font-weight:700;letter-spacing:-.01em;margin:0 0 4px;text-wrap:balance}
+.panel .sub{color:var(--text-2);font-size:13.5px;margin:0 0 14px;max-width:66ch}
+.grid2{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+.drawer-body .grid2{grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:11px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3)}
+label.f input,label.f select,label.f textarea{background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;
+  font-size:14px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--text);width:100%}
+label.f textarea{resize:vertical;min-height:90px;line-height:1.45}
+.row{display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.row.end{justify-content:flex-end}
+
+/* ---------- drawer ---------- */
+.scrim{position:fixed;inset:0;background:rgba(10,20,19,.5);z-index:40}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--surface);border-left:1px solid var(--line);
+  z-index:41;display:flex;flex-direction:column}
+.drawer-head{display:flex;gap:10px;align-items:flex-start;padding:16px 18px;border-bottom:1px solid var(--line)}
+.drawer-head h3{font-family:var(--display);font-size:18px;margin:0;line-height:1.25;text-wrap:balance}
+.drawer-head p{margin:2px 0 0;color:var(--text-2);font-size:13.5px}
+.drawer-body{padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;flex:1}
+.x{background:none;border:0;color:var(--text-3);font-size:22px;line-height:1;cursor:pointer;padding:0 2px;margin-left:auto}
+.x:hover{color:var(--text)}
+.stagepick{display:flex;flex-wrap:wrap;gap:5px}
+.stagepick button{border:1px solid var(--line);background:var(--bg);border-radius:20px;padding:4px 11px;font-size:12.5px;cursor:pointer;color:var(--text-2)}
+.stagepick button[aria-pressed="true"]{background:var(--stage);border-color:var(--stage);color:#fff;font-weight:600}
+
+/* ---------- radar ---------- */
+.boards{display:grid;gap:9px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.boardcard{display:flex;flex-direction:column;gap:3px;background:var(--bg);border:1px solid var(--line-soft);border-radius:8px;
+  padding:11px 12px;text-decoration:none;color:inherit}
+.boardcard:hover{border-color:var(--accent);background:var(--accent-soft)}
+.boardcard .bn{font-weight:600;font-size:14px;display:flex;gap:7px;align-items:baseline}
+.boardcard .he{font-family:'Heebo',sans-serif;color:var(--text-3);font-size:13px;direction:rtl}
+.boardcard .bd{font-size:12.5px;color:var(--text-2);line-height:1.4}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.presets button{background:var(--surface-2);border:1px solid transparent;border-radius:20px;padding:4px 11px;font-size:12.5px;cursor:pointer;color:var(--text-2)}
+.presets button:hover,.presets button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-2);border-color:var(--accent)}
+
+/* ---------- analytics ---------- */
+.funnel{display:flex;flex-direction:column;gap:7px}
+.frow{display:grid;grid-template-columns:158px 1fr 92px;gap:11px;align-items:center}
+.frow .fl{font-size:13px;color:var(--text-2)}
+.fbar{height:26px;border-radius:5px;background:var(--stage);min-width:3px}
+.ftrack{background:var(--sunken);border-radius:5px;overflow:hidden}
+.fv{font-family:var(--mono);font-size:12.5px;color:var(--text-2);font-variant-numeric:tabular-nums;text-align:right}
+.fv b{color:var(--text)}
+table.data{width:100%;border-collapse:collapse;font-size:13.5px}
+table.data th{text-align:left;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);
+  padding:0 10px 7px 0;font-weight:700;border-bottom:1px solid var(--line)}
+table.data td{padding:8px 10px 8px 0;border-bottom:1px solid var(--line-soft)}
+table.data td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;padding-right:0}
+.scrollx{overflow-x:auto}
+.kpis{display:grid;gap:11px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.kpi{background:var(--bg);border:1px solid var(--line-soft);border-radius:8px;padding:12px 13px}
+.kpi .kn{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .kl{font-size:12px;color:var(--text-2);margin-top:3px}
+.kpi.alert .kn{color:var(--crit)}
+
+/* ---------- output ---------- */
+.out{background:var(--sunken);border:1px solid var(--line-soft);border-radius:8px;padding:13px 15px;white-space:pre-wrap;
+  font-size:14px;line-height:1.6;overflow-wrap:anywhere;max-height:460px;overflow-y:auto}
+.muted{color:var(--text-3);font-size:13px}
+.err{color:var(--crit);font-size:13.5px}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;
+  animation:sp .7s linear infinite;vertical-align:-1px;margin-right:6px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (max-width:640px){
+  .shell{padding:14px 13px 60px}
+  .frow{grid-template-columns:104px 1fr 78px;gap:8px}
+  .drawer{width:100%}
+}
+</style>
+
+<div class="shell">
+  <header class="top">
+    <h1 class="brand">Israel <span>PM</span> Pipeline</h1>
+    <div class="statline" id="statline"></div>
+    <div class="top-right"><button class="btn sm ghost" id="themeBtn" title="Сменить тему">◐</button></div>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+  <div id="view"></div>
+</div>
+
+<div id="drawer"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   Israel PM Pipeline — трекер поиска работы
+   Данные: capability "db" (общее хранилище артефакта),
+           fallback — localStorage, если db недоступна.
+   ИИ:     capability "sample" (разбор вакансии, резюме, письма).
+   Файлы:  capability "downloads" (выгрузка CSV / писем).
+   ============================================================ */
+
+const STAGES = [
+  {id:"radar",     ru:"Радар",         c:"var(--s1)", hint:"Нашла, ещё не откликалась"},
+  {id:"applied",   ru:"Отклик",        c:"var(--s2)", hint:"Резюме отправлено"},
+  {id:"screening", ru:"Скрининг HR",   c:"var(--s3)", hint:"Первый звонок с рекрутером"},
+  {id:"interview", ru:"Интервью",      c:"var(--s4)", hint:"Интервью с нанимающим менеджером"},
+  {id:"final",     ru:"Финал",         c:"var(--s5)", hint:"Домашка, ассессмент, финальные раунды"},
+  {id:"offer",     ru:"Оффер",         c:"var(--s6)", hint:"Есть предложение"},
+  {id:"rejected",  ru:"Отказ / архив", c:"var(--s7)", hint:"Закрыто"}
+];
+const STAGE = Object.fromEntries(STAGES.map(s=>[s.id,s]));
+const ACTIVE = ["applied","screening","interview","final","offer"];
+const STALE_DAYS = 10;
+
+const AREAS = ["Центр (Гуш-Дан)","Юг (Беэр-Шева / Негев)","Иерусалим","Север","Remote","Гибрид"];
+const SOURCES = ["LinkedIn","AllJobs","Drushim","JobMaster","Janglo","Startup Nation","Indeed","Google Jobs","Реферал","Сайт компании","Telegram","Другое"];
+
+const DEFAULT_PROFILE = {
+  name:"Alexandra Miron",
+  title:"Growth Product Manager",
+  city:"Be'er Sheva",
+  email:"miron.alexandrra@gmail.com",
+  phone:"055-259-1864",
+  linkedin:"linkedin.com/in/alexandramiron8",
+  hebrew:"Базовый",
+  english:"Свободный",
+  targets:"Growth Product Manager, Product Owner, Product Manager (Growth / Funnel / Web), Project Manager в продуктовой команде",
+  summary:"Growth Product Manager / Product Owner, 7+ лет: владение продуктом, оптимизация воронок, CJM, пользовательские исследования, эксперименты, кросс-функциональная доставка. Вела AI-инфраструктуру для запуска web-воронок и команду design/dev/analytics, чтобы масштабировать A/B-тесты. EdTech и страхование.",
+  highlights:"• TripleTen | Nebius Group, Growth PM (2022 — н.в.): владение acquisition-воронками и CJM целиком.\n• AI-Powered Funnel Infrastructure (Claude), Product Owner: сократила цикл разработки ~в 10 раз — с 3 недель до 1.\n• До 5 воронок параллельно, 2–5 A/B-тестов в месяц.\n• Career Quiz — флагманская воронка компании (Lovable): владение метриками start / completion / lead / booked call.\n• Renaissance Life Insurance, Product Owner (2019–2021): 20+ экспериментов, два страховых продукта с нуля до запуска, включая первый в России продукт для людей с ВИЧ.\n• Обучение 70–80 сотрудников работе с сайтами и digital-коммуникацией.",
+  skills:"Product: приоритизация бэклога, CJM, скоуп фич и флоу, требования, Jira/Kanban, стейкхолдеры. Research: интервью, рекрут респондентов, синтез инсайтов, анализ болей. Growth: A/B-тесты, CRO, оптимизация воронки, лендинги, messaging, персонализация, quiz-лидоген. AI & Automation: дизайн AI-воркфлоу, промпт-системы, Make.com, Jira automation. Tools: Claude, Lovable, Figma, Framer, GA4, Tableau, Jira, Notion, WordPress, Google Sheets.",
+  education:"Java & Python Development — Masa / Tel Ran (Израиль), 2025. BA Journalism & Communications — МПГУ, 2018. Google Business Intelligence Professional, Google AI Essentials."
+};
+
+const DEMO = [
+  {id:"demo1",demo:true,company:"Wix",role:"Growth Product Manager, Acquisition",stage:"screening",source:"LinkedIn",area:"Центр (Гуш-Дан)",city:"Tel Aviv",salary:"32–40k ₪",hebrew:false,url:"https://www.wix.com/jobs",fit:82,
+   next:"Созвон с рекрутером",nextDate:iso(2),applied:iso(-6),updated:iso(-2),notes:"Ищут PM на acquisition-воронки — прямое попадание в мой опыт с квизом и лендингами."},
+  {id:"demo2",demo:true,company:"monday.com",role:"Product Manager, Growth",stage:"applied",source:"LinkedIn",area:"Центр (Гуш-Дан)",city:"Tel Aviv",salary:"—",hebrew:false,url:"https://monday.com/careers",fit:74,
+   next:"Написать хиринг-менеджеру в LinkedIn",nextDate:iso(1),applied:iso(-3),updated:iso(-3),notes:"Отклик через сайт. Нужен человек с опытом PLG-воронок."},
+  {id:"demo3",demo:true,company:"Bynet / Gav-Yam Negev",role:"Product Owner",stage:"radar",source:"Startup Nation",area:"Юг (Беэр-Шева / Негев)",city:"Be'er Sheva",salary:"—",hebrew:true,url:"https://www.gavyam-negev.com/",fit:61,
+   next:"Проверить требования по ивриту",nextDate:"",applied:"",updated:iso(-1),notes:"20 минут от дома. Часть вакансий требует иврит — уточнить."},
+  {id:"demo4",demo:true,company:"Similarweb",role:"Product Manager, Web Funnel",stage:"interview",source:"Реферал",area:"Центр (Гуш-Дан)",city:"Tel Aviv",salary:"35–45k ₪",hebrew:false,url:"https://www.similarweb.com/corp/careers/",fit:88,
+   next:"Домашнее задание по CRO",nextDate:iso(4),applied:iso(-14),updated:iso(-1),notes:"Реферал от бывшего коллеги. Прошла HR и PM-интервью, ждут кейс."},
+  {id:"demo5",demo:true,company:"Lusha",role:"Growth Manager",stage:"rejected",source:"AllJobs",area:"Центр (Гуш-Дан)",city:"Tel Aviv",salary:"—",hebrew:false,url:"https://www.lusha.com/careers/",fit:55,
+   next:"",nextDate:"",applied:iso(-24),updated:iso(-11),notes:"Отказ после скрининга: искали более сильный B2B-SaaS бэкграунд."}
+];
+
+const BOARDS = [
+  {n:"LinkedIn Jobs",d:"Главный канал англоязычного хайтека. Ставь фильтр «за неделю» и пиши хиринг-менеджеру напрямую.",
+   u:(q,c)=>`https://www.linkedin.com/jobs/search/?keywords=${E(q)}&location=${E(c?c+", Israel":"Israel")}&f_TPR=r604800`},
+  {n:"AllJobs",he:"אולג'ובס",d:"Крупнейший израильский борд. Много ивритоязычных ролей, но и хайтек есть.",
+   u:(q)=>`https://www.alljobs.co.il/SearchResultsGuest.aspx?freetxt=${E(q)}`},
+  {n:"Drushim",he:"דרושים",d:"Второй по размеру локальный борд, сильный по центру страны.",
+   u:(q)=>`https://www.drushim.co.il/jobs/search/${E(q)}/`},
+  {n:"JobMaster",he:"ג'וב מאסטר",d:"Локальный борд, часто дублирует вакансии кадровых агентств.",
+   u:(q)=>`https://www.jobmaster.co.il/jobs/?q=${E(q)}`},
+  {n:"Startup Nation Finder",d:"База израильских стартапов и их вакансий. Хорошо для точечного таргета компаний.",
+   u:()=>`https://finder.startupnationcentral.org/jobs`},
+  {n:"Janglo",d:"Вакансии для англоговорящих в Израиле — там, где иврит не блокер.",
+   u:()=>`https://www.janglo.net/jobs`},
+  {n:"Indeed Israel",d:"Агрегатор: подтягивает и борды, и сайты компаний.",
+   u:(q,c)=>`https://il.indeed.com/jobs?q=${E(q)}&l=${E(c||"Israel")}`},
+  {n:"Google Jobs",d:"Поиск Google по вакансиям — быстрее всего ловит свежие постинги.",
+   u:(q,c)=>`https://www.google.com/search?q=${E(q+" jobs "+(c||"Israel"))}&ibp=htl;jobs`},
+  {n:"Glassdoor",d:"Вакансии плюс отзывы сотрудников и вилки — полезно перед оффером.",
+   u:(q)=>`https://www.glassdoor.com/Job/jobs.htm?sc.keyword=${E(q)}&locT=N&locKeyword=Israel`},
+  {n:"Gav-Yam Negev",d:"Технопарк в Беэр-Шеве: кибер и хайтек в 20 минутах от дома.",
+   u:()=>`https://www.gavyam-negev.com/`},
+  {n:"Wellfound",d:"Стартапы и remote-роли, много ранних команд.",
+   u:()=>`https://wellfound.com/role/r/product-manager`}
+];
+const ROLE_PRESETS=["Growth Product Manager","Product Manager","Product Owner","Growth Manager","CRO Manager","Project Manager","Web Product Manager"];
+const CITY_PRESETS=["Tel Aviv","Be'er Sheva","Herzliya","Ra'anana","Petah Tikva","Rehovot","Israel"];
+
+/* ---------- утилиты ---------- */
+function E(s){return encodeURIComponent(String(s||""))}
+function iso(offsetDays){const d=new Date();d.setDate(d.getDate()+offsetDays);return d.toISOString().slice(0,10)}
+function today(){return new Date().toISOString().slice(0,10)}
+function days(from){if(!from)return null;const ms=Date.now()-new Date(from+"T00:00:00").getTime();return Math.floor(ms/86400000)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function uid(){return "j"+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function pct(a,b){return b>0?Math.round(a/b*100):0}
+function el(id){return document.getElementById(id)}
+
+/* ---------- состояние ---------- */
+const S = {
+  tab:"pipeline", jobs:[], profile:{...DEFAULT_PROFILE}, demoOff:false,
+  db:null, sample:null, downloads:null, ready:false,
+  open:null, gen:{busy:false,text:"",err:"",kind:"cover",jobId:null,lang:"en"},
+  parse:{busy:false,err:"",result:null},
+  radar:{role:"Growth Product Manager",city:"Tel Aviv"}
+};
+
+/* ---------- хранилище ---------- */
+const LS="israel-pm-pipeline-v1";
+function saveLocal(){try{localStorage.setItem(LS,JSON.stringify({jobs:S.jobs,profile:S.profile,demoOff:S.demoOff}))}catch(e){}}
+function loadLocal(){try{const r=localStorage.getItem(LS);if(!r)return;const d=JSON.parse(r);
+  if(Array.isArray(d.jobs))S.jobs=d.jobs; if(d.profile)S.profile={...DEFAULT_PROFILE,...d.profile}; S.demoOff=!!d.demoOff;}catch(e){}}
+
+async function putJob(j){
+  const i=S.jobs.findIndex(x=>x.id===j.id);
+  if(i>=0)S.jobs[i]=j; else S.jobs.push(j);
+  render(); saveLocal();
+  if(S.db){try{await S.db.doc("jobs/"+j.id).set(j)}catch(e){console.warn("db set",e)}}
+}
+async function dropJob(id){
+  S.jobs=S.jobs.filter(x=>x.id!==id); render(); saveLocal();
+  if(S.db){try{await S.db.doc("jobs/"+id).delete()}catch(e){console.warn("db delete",e)}}
+}
+async function putProfile(p){
+  S.profile=p; render(); saveLocal();
+  if(S.db){try{await S.db.doc("profile/main").set(p)}catch(e){console.warn("db profile",e)}}
+}
+async function putSettings(){
+  saveLocal();
+  if(S.db){try{await S.db.doc("settings/main").set({demoOff:S.demoOff})}catch(e){}}
+}
+
+/* показываем демо-карточки, пока нет своих и пользователь их не убрал */
+function visibleJobs(){ return (S.jobs.length===0 && !S.demoOff) ? DEMO : S.jobs; }
+function isDemoMode(){ return S.jobs.length===0 && !S.demoOff; }
+
+/* ============================================================ РЕНДЕР ============================================================ */
+function render(){
+  renderStatline();
+  renderTabs();
+  const v=el("view");
+  v.innerHTML =
+    S.tab==="pipeline" ? viewPipeline() :
+    S.tab==="radar"    ? viewRadar()    :
+    S.tab==="add"      ? viewAdd()      :
+    S.tab==="docs"     ? viewDocs()     :
+    S.tab==="stats"    ? viewStats()    : viewProfile();
+  renderDrawer();
+  wire();
+}
+
+function renderStatline(){
+  const j=visibleJobs();
+  const active=j.filter(x=>ACTIVE.includes(x.stage)).length;
+  const iv=j.filter(x=>["interview","final","offer"].includes(x.stage)).length;
+  const applied=j.filter(x=>x.stage!=="radar").length;
+  const replied=j.filter(x=>["screening","interview","final","offer"].includes(x.stage)).length;
+  const due=j.filter(x=>x.nextDate&&x.nextDate<=today()&&x.stage!=="rejected").length;
+  el("statline").innerHTML=
+    `<span><b>${active}</b> в работе</span>`+
+    `<span><b>${iv}</b> до интервью</span>`+
+    `<span>ответов <b>${pct(replied,applied)}%</b></span>`+
+    (due?`<span style="color:var(--crit)"><b>${due}</b> задач на сегодня</span>`:``);
+}
+
+function renderTabs(){
+  const t=[["pipeline","Пайплайн"],["radar","Радар вакансий"],["add","Добавить вакансию"],["docs","Резюме и письмо"],["stats","Аналитика"],["profile","Профиль"]];
+  el("tabs").innerHTML=t.map(([id,n])=>
+    `<button role="tab" data-tab="${id}" aria-selected="${S.tab===id}">${n}</button>`).join("");
+}
+
+/* ---------- Пайплайн ---------- */
+function viewPipeline(){
+  const jobs=visibleJobs();
+  const banner = isDemoMode()
+    ? `<div class="notice"><span><b>Это примеры</b> — чтобы показать, как выглядит заполненная доска. Твои вакансии заменят их автоматически.</span>
+        <button class="btn sm" data-act="cleardemo">Убрать примеры</button></div>` : "";
+  const cols = STAGES.map(st=>{
+    const list=jobs.filter(j=>j.stage===st.id).sort(byUrgency);
+    return `<section class="col" data-stage="${st.id}">
+      <div class="col-head"><span class="dot" style="background:${st.c}"></span>
+        <span class="col-name">${st.ru}</span><span class="col-n">${list.length}</span></div>
+      ${list.map(cardHTML).join("")}
+      ${list.length?"":`<div class="empty">${esc(st.hint)}</div>`}
+      ${st.id==="radar"?`<button class="col-add" data-act="tab" data-tab="add">+ вакансия</button>`:""}
+    </section>`}).join("");
+  return banner+`<div class="board" id="board">${cols}</div>`;
+}
+function byUrgency(a,b){
+  const ad=a.nextDate||"9999", bd=b.nextDate||"9999";
+  return ad===bd ? String(b.updated||"").localeCompare(String(a.updated||"")) : ad.localeCompare(bd);
+}
+function cardHTML(j){
+  const st=STAGE[j.stage]||STAGES[0];
+  const stale=ACTIVE.includes(j.stage)&&j.stage!=="offer"&&days(j.updated)>STALE_DAYS;
+  const due=j.nextDate&&j.nextDate<=today()&&j.stage!=="rejected";
+  return `<article class="card" draggable="true" data-id="${esc(j.id)}" style="--stage:${st.c}">
+    <div class="card-role">${esc(j.role)}</div>
+    <div class="card-co">${esc(j.company)}${j.city?" · "+esc(j.city):""}</div>
+    <div class="card-meta">
+      ${j.demo?`<span class="chip demo">пример</span>`:""}
+      ${j.fit?`<span class="chip fit">fit ${j.fit}</span>`:""}
+      ${j.hebrew?`<span class="chip he">иврит</span>`:""}
+      ${j.source?`<span class="chip">${esc(j.source)}</span>`:""}
+      ${due?`<span class="chip stale">${esc(j.next||"дедлайн")}</span>`:""}
+      ${stale&&!due?`<span class="chip stale">тишина ${days(j.updated)}д</span>`:""}
+    </div>
+  </article>`;
+}
+
+/* ---------- Радар ---------- */
+function viewRadar(){
+  const {role,city}=S.radar;
+  return `<div class="panel">
+    <h2>Радар вакансий</h2>
+    <p class="sub">Собери запрос — и открывай все борды Израиля одним набором ссылок. Страница внутри claude.ai не может сама лезть на LinkedIn и AllJobs (браузер это блокирует), поэтому она делает следующее лучшее: строит готовые поисковые ссылки с твоими фильтрами. Нашла вакансию — жми «Добавить вакансию» и вставляй текст.</p>
+    <div class="grid2" style="margin-bottom:12px">
+      <label class="f">Роль<input id="rRole" value="${esc(role)}"></label>
+      <label class="f">Город<input id="rCity" value="${esc(city)}"></label>
+    </div>
+    <div class="presets" style="margin-bottom:8px">${ROLE_PRESETS.map(p=>
+      `<button data-act="preset" data-k="role" data-v="${esc(p)}" aria-pressed="${p===role}">${esc(p)}</button>`).join("")}</div>
+    <div class="presets" style="margin-bottom:16px">${CITY_PRESETS.map(p=>
+      `<button data-act="preset" data-k="city" data-v="${esc(p)}" aria-pressed="${p===city}">${esc(p)}</button>`).join("")}</div>
+    <div class="boards">${BOARDS.map(b=>`
+      <a class="boardcard" target="_blank" rel="noopener noreferrer" href="${esc(b.u(role,city))}">
+        <span class="bn">${esc(b.n)}${b.he?`<span class="he">${esc(b.he)}</span>`:""}</span>
+        <span class="bd">${esc(b.d)}</span>
+      </a>`).join("")}</div>
+  </div>`;
+}
+
+/* ---------- Добавить вакансию ---------- */
+function viewAdd(){
+  const p=S.parse;
+  const res=p.result;
+  return `<div class="panel">
+    <h2>Вставь текст вакансии</h2>
+    <p class="sub">Скопируй описание вакансии целиком и вставь сюда. Claude разберёт его на поля, посчитает совпадение с твоим профилем и покажет, каких ключевых слов не хватает в резюме.</p>
+    <label class="f" style="margin-bottom:10px">Описание вакансии
+      <textarea id="jd" style="min-height:170px" placeholder="Company: ...&#10;Role: Growth Product Manager&#10;Requirements: ...">${esc(p.raw||"")}</textarea></label>
+    <div class="row">
+      <button class="btn" data-act="parse" ${p.busy?"disabled":""}>${p.busy?'<span class="spin"></span>Разбираю…':"Разобрать и оценить"}</button>
+      <button class="btn ghost" data-act="manual">Заполнить вручную</button>
+      ${S.sample?"":`<span class="muted">ИИ-разбор недоступен в этом просмотре — заполни вручную.</span>`}
+    </div>
+    ${p.err?`<p class="err" style="margin-top:10px">${esc(p.err)}</p>`:""}
+    ${res?`<div style="margin-top:16px;display:flex;flex-direction:column;gap:12px">
+      <div class="kpis">
+        <div class="kpi"><div class="kn">${esc(res.fit??"—")}</div><div class="kl">совпадение с профилем, 0–100</div></div>
+        <div class="kpi"><div class="kn" style="font-size:17px;line-height:1.3">${esc(res.company||"—")}</div><div class="kl">${esc(res.role||"роль не распознана")}</div></div>
+        <div class="kpi"><div class="kn" style="font-size:17px;line-height:1.3">${res.hebrew?"Нужен иврит":"Английского хватит"}</div><div class="kl">${esc(res.city||"город не указан")}</div></div>
+      </div>
+      <div class="grid2">
+        <div><h3 style="font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:0 0 6px">Что совпадает</h3>
+          <div class="out" style="max-height:200px">${esc((res.matches||[]).map(x=>"• "+x).join("\n")||"—")}</div></div>
+        <div><h3 style="font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:0 0 6px">Пробелы и что добавить в резюме</h3>
+          <div class="out" style="max-height:200px">${esc((res.gaps||[]).map(x=>"• "+x).join("\n")||"—")}</div></div>
+      </div>
+      ${res.keywords&&res.keywords.length?`<div><h3 style="font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin:0 0 6px">Ключевые слова для ATS</h3>
+        <div class="presets">${res.keywords.map(k=>`<button type="button">${esc(k)}</button>`).join("")}</div></div>`:""}
+      <div class="row end"><button class="btn" data-act="savefromparse">Добавить в пайплайн</button></div>
+    </div>`:""}
+  </div>`;
+}
+
+/* ---------- Резюме и письмо ---------- */
+function viewDocs(){
+  const jobs=visibleJobs().filter(j=>j.stage!=="rejected");
+  const g=S.gen;
+  const kinds=[["cover","Cover letter"],["resume","Резюме под вакансию"],["outreach","Сообщение рекрутеру"],["prep","Подготовка к интервью"]];
+  return `<div class="panel">
+    <h2>Резюме и письмо под вакансию</h2>
+    <p class="sub">Claude берёт твой профиль из вкладки «Профиль» и текст выбранной вакансии, и пишет документ под неё. Документы — на английском (стандарт израильского хайтека), разбор и советы — на русском.</p>
+    <div class="grid2" style="margin-bottom:12px">
+      <label class="f">Вакансия
+        <select id="gJob">${jobs.length?jobs.map(j=>`<option value="${esc(j.id)}" ${g.jobId===j.id?"selected":""}>${esc(j.company)} — ${esc(j.role)}</option>`).join(""):`<option value="">Сначала добавь вакансию</option>`}</select></label>
+      <label class="f">Язык сообщения
+        <select id="gLang">
+          <option value="en" ${g.lang==="en"?"selected":""}>English</option>
+          <option value="he" ${g.lang==="he"?"selected":""}>עברית</option>
+          <option value="ru" ${g.lang==="ru"?"selected":""}>Русский</option>
+        </select></label>
+    </div>
+    <div class="presets" style="margin-bottom:14px">${kinds.map(([k,n])=>
+      `<button data-act="kind" data-v="${k}" aria-pressed="${g.kind===k}">${n}</button>`).join("")}</div>
+    <div class="row">
+      <button class="btn" data-act="gen" ${g.busy||!jobs.length?"disabled":""}>${g.busy?'<span class="spin"></span>Пишу…':"Сгенерировать"}</button>
+      ${g.text?`<button class="btn ghost" data-act="copy">Скопировать</button>`:""}
+      ${g.text&&S.downloads?`<button class="btn ghost" data-act="dl">Скачать .txt</button>`:""}
+      ${S.sample?"":`<span class="muted">ИИ недоступен в этом просмотре.</span>`}
+    </div>
+    ${g.err?`<p class="err" style="margin-top:10px">${esc(g.err)}</p>`:""}
+    ${g.text?`<div class="out" style="margin-top:14px">${esc(g.text)}</div>`:
+      `<p class="muted" style="margin-top:14px">Выбери вакансию и тип документа — текст появится здесь.</p>`}
+  </div>`;
+}
+
+/* ---------- Аналитика ---------- */
+function viewStats(){
+  const j=visibleJobs();
+  const n=id=>j.filter(x=>x.stage===id).length;
+  const reached=id=>{const order=["radar","applied","screening","interview","final","offer"];
+    const i=order.indexOf(id); return j.filter(x=>{const k=order.indexOf(x.stage);
+      return k>=i || (x.stage==="rejected" && (x.maxStage?order.indexOf(x.maxStage)>=i:i<=1));}).length;};
+  const applied=j.filter(x=>x.stage!=="radar").length;
+  const replied=reached("screening"), interviewed=reached("interview"), offers=n("offer");
+  const max=Math.max(j.length,1);
+  const steps=[["Всего в базе",j.length],["Отклик отправлен",applied],["Ответ / скрининг",replied],["Интервью",interviewed],["Финал",reached("final")],["Оффер",offers]];
+  const stale=j.filter(x=>ACTIVE.includes(x.stage)&&x.stage!=="offer"&&days(x.updated)>STALE_DAYS);
+  const due=j.filter(x=>x.nextDate&&x.nextDate<=today()&&x.stage!=="rejected");
+
+  const bySrc={};
+  j.forEach(x=>{const k=x.source||"Не указан";(bySrc[k]=bySrc[k]||{n:0,r:0,i:0}); bySrc[k].n++;
+    if(["screening","interview","final","offer"].includes(x.stage))bySrc[k].r++;
+    if(["interview","final","offer"].includes(x.stage))bySrc[k].i++;});
+  const srcRows=Object.entries(bySrc).sort((a,b)=>b[1].n-a[1].n);
+
+  return `<div class="panel">
+    <h2>Как идёт воронка</h2>
+    <p class="sub">Главный вопрос поиска работы — не «сколько я отправила», а «где отваливается». Смотри на первую строку, где число резко падает: там и надо чинить.</p>
+    <div class="kpis" style="margin-bottom:18px">
+      <div class="kpi"><div class="kn">${applied}</div><div class="kl">откликов отправлено</div></div>
+      <div class="kpi"><div class="kn">${pct(replied,applied)}%</div><div class="kl">доля ответов (норма 10–20%)</div></div>
+      <div class="kpi"><div class="kn">${pct(interviewed,replied)}%</div><div class="kl">скрининг → интервью</div></div>
+      <div class="kpi ${due.length?"alert":""}"><div class="kn">${due.length}</div><div class="kl">задач с дедлайном сегодня</div></div>
+    </div>
+    <div class="funnel">${steps.map(([label,val],i)=>`
+      <div class="frow">
+        <span class="fl">${esc(label)}</span>
+        <div class="ftrack"><div class="fbar" style="--stage:${STAGES[i].c};width:${val?Math.max(val/max*100,2):0}%;min-width:${val?3:0}px"></div></div>
+        <span class="fv"><b>${val}</b>${i>0&&steps[i-1][1]?" · "+pct(val,steps[i-1][1])+"%":""}</span>
+      </div>`).join("")}</div>
+  </div>
+
+  <div class="panel">
+    <h2>Что работает по источникам</h2>
+    <p class="sub">Если реферал даёт 50% ответов, а борд — 3%, вывод очевиден: меньше массовых откликов, больше писем людям.</p>
+    <div class="scrollx"><table class="data">
+      <thead><tr><th>Источник</th><th style="text-align:right">Вакансий</th><th style="text-align:right">Ответов</th><th style="text-align:right">Интервью</th><th style="text-align:right">Конверсия</th></tr></thead>
+      <tbody>${srcRows.length?srcRows.map(([k,v])=>`<tr><td>${esc(k)}</td><td class="num">${v.n}</td><td class="num">${v.r}</td><td class="num">${v.i}</td><td class="num">${pct(v.r,v.n)}%</td></tr>`).join(""):`<tr><td colspan="5" class="muted">Пока нет данных</td></tr>`}</tbody>
+    </table></div>
+  </div>
+
+  <div class="panel">
+    <h2>Требует действия</h2>
+    <p class="sub">Вакансии, где дедлайн настал или где больше ${STALE_DAYS} дней тишины — пора написать follow-up.</p>
+    ${due.length||stale.length?`<div class="scrollx"><table class="data">
+      <thead><tr><th>Компания</th><th>Стадия</th><th>Что делать</th><th style="text-align:right">Дней тишины</th></tr></thead>
+      <tbody>${[...due,...stale.filter(x=>!due.includes(x))].map(x=>
+        `<tr><td>${esc(x.company)} — ${esc(x.role)}</td><td>${esc(STAGE[x.stage].ru)}</td><td>${esc(x.next||"Написать follow-up")}</td><td class="num">${days(x.updated)??"—"}</td></tr>`).join("")}</tbody>
+    </table></div>`:`<p class="muted">Ничего не висит. Хороший день.</p>`}
+    <div class="row end" style="margin-top:14px">
+      <button class="btn ghost" data-act="csv">Выгрузить всё в CSV</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- Профиль ---------- */
+function viewProfile(){
+  const p=S.profile;
+  const f=(k,l,ta)=>ta
+    ? `<label class="f">${l}<textarea data-pf="${k}" style="min-height:${ta}px">${esc(p[k]||"")}</textarea></label>`
+    : `<label class="f">${l}<input data-pf="${k}" value="${esc(p[k]||"")}"></label>`;
+  return `<div class="panel">
+    <h2>Твой профиль</h2>
+    <p class="sub">Это то, что Claude использует как источник правды, когда пишет резюме и письма. Чем точнее цифры в «Ключевых результатах», тем сильнее выходят документы — рекрутеры реагируют на «в 10 раз быстрее», а не на «улучшила процессы».</p>
+    <div class="grid2">
+      ${f("name","Имя")}${f("title","Текущий титул")}
+      ${f("city","Город")}${f("email","Email")}
+      ${f("phone","Телефон")}${f("linkedin","LinkedIn")}
+      ${f("hebrew","Иврит")}${f("english","Английский")}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:12px">
+      ${f("targets","Целевые роли",70)}
+      ${f("summary","Краткое саммари",100)}
+      ${f("highlights","Ключевые результаты (с цифрами)",160)}
+      ${f("skills","Навыки",120)}
+      ${f("education","Образование и сертификаты",80)}
+    </div>
+    <div class="row end" style="margin-top:14px">
+      <button class="btn ghost" data-act="resetprofile">Вернуть исходное</button>
+      <button class="btn" data-act="saveprofile">Сохранить профиль</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- Карточка вакансии (drawer) ---------- */
+function renderDrawer(){
+  const d=el("drawer");
+  if(!S.open){d.innerHTML="";return}
+  const j=S.open;
+  const st=STAGE[j.stage]||STAGES[0];
+  const fld=(k,l,type)=>`<label class="f">${l}<input data-jf="${k}" ${type?`type="${type}"`:""} value="${esc(j[k]||"")}"></label>`;
+  d.innerHTML=`<div class="scrim" data-act="close"></div>
+  <aside class="drawer" role="dialog" aria-label="Карточка вакансии">
+    <div class="drawer-head">
+      <div><h3>${esc(j.role)}</h3><p>${esc(j.company)}${j.city?" · "+esc(j.city):""}${j.demo?" · пример":""}</p></div>
+      <button class="x" data-act="close" aria-label="Закрыть">×</button>
+    </div>
+    <div class="drawer-body">
+      <div><div class="col-name" style="margin-bottom:6px">Стадия</div>
+        <div class="stagepick">${STAGES.map(s=>
+          `<button data-act="stage" data-v="${s.id}" aria-pressed="${s.id===j.stage}" style="--stage:${s.c}">${s.ru}</button>`).join("")}</div></div>
+      <div class="grid2">
+        ${fld("company","Компания")}${fld("role","Роль")}
+        <label class="f">Источник<select data-jf="source">${SOURCES.map(s=>`<option ${s===j.source?"selected":""}>${esc(s)}</option>`).join("")}</select></label>
+        <label class="f">Локация<select data-jf="area">${AREAS.map(s=>`<option ${s===j.area?"selected":""}>${esc(s)}</option>`).join("")}</select></label>
+        ${fld("city","Город")}${fld("salary","Вилка, ₪")}
+        ${fld("applied","Дата отклика","date")}${fld("nextDate","Дедлайн следующего шага","date")}
+      </div>
+      ${fld("next","Следующий шаг")}
+      ${fld("url","Ссылка на вакансию")}
+      <label class="f">Иврит обязателен?<select data-jf="hebrew"><option value="no" ${j.hebrew?"":"selected"}>Нет — хватит английского</option><option value="yes" ${j.hebrew?"selected":""}>Да</option></select></label>
+      <label class="f">Заметки<textarea data-jf="notes" style="min-height:110px">${esc(j.notes||"")}</textarea></label>
+      ${j.url?`<a class="btn ghost sm" style="align-self:flex-start;text-decoration:none" target="_blank" rel="noopener noreferrer" href="${esc(j.url)}">Открыть вакансию ↗</a>`:""}
+      <div class="row end" style="margin-top:4px">
+        <button class="btn ghost" data-act="delete">Удалить</button>
+        <button class="btn" data-act="save">Сохранить</button>
+      </div>
+    </div>
+  </aside>`;
+  d.querySelectorAll(".stagepick button").forEach(b=>b.style.setProperty("--stage",STAGE[b.dataset.v].c));
+}
+
+/* ============================================================ СОБЫТИЯ ============================================================ */
+function wire(){
+  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;render()});
+  document.querySelectorAll(".card").forEach(c=>{
+    c.onclick=()=>{const j=visibleJobs().find(x=>x.id===c.dataset.id); if(j){S.open={...j};render()}};
+    c.ondragstart=e=>{e.dataTransfer.setData("text/plain",c.dataset.id);c.classList.add("dragging")};
+    c.ondragend=()=>c.classList.remove("dragging");
+  });
+  document.querySelectorAll(".col").forEach(col=>{
+    col.ondragover=e=>{e.preventDefault();col.classList.add("drop")};
+    col.ondragleave=()=>col.classList.remove("drop");
+    col.ondrop=e=>{e.preventDefault();col.classList.remove("drop");
+      const id=e.dataTransfer.getData("text/plain");
+      const j=visibleJobs().find(x=>x.id===id); if(!j)return;
+      moveStage(j,col.dataset.stage);};
+  });
+  const rr=el("rRole"), rc=el("rCity");
+  if(rr)rr.oninput=()=>{S.radar.role=rr.value};
+  if(rc)rc.oninput=()=>{S.radar.city=rc.value};
+  if(rr)rr.onblur=render; if(rc)rc.onblur=render;
+  const gj=el("gJob"); if(gj)gj.onchange=()=>{S.gen.jobId=gj.value};
+  const gl=el("gLang"); if(gl)gl.onchange=()=>{S.gen.lang=gl.value};
+  el("themeBtn").onclick=toggleTheme;
+}
+
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("[data-act]"); if(!t)return;
+  const act=t.dataset.act;
+
+  if(act==="close"){S.open=null;render()}
+  else if(act==="tab"){S.tab=t.dataset.tab;render()}
+  else if(act==="preset"){S.radar[t.dataset.k]=t.dataset.v;render()}
+  else if(act==="kind"){S.gen.kind=t.dataset.v;S.gen.text="";S.gen.err="";render()}
+  else if(act==="cleardemo"){S.demoOff=true;putSettings();render()}
+  else if(act==="stage"&&S.open){moveStage(S.open,t.dataset.v);}
+  else if(act==="save"&&S.open){await saveDrawer()}
+  else if(act==="delete"&&S.open){const id=S.open.id;S.open=null;await dropJob(id)}
+  else if(act==="manual"){openNew()}
+  else if(act==="parse"){await doParse()}
+  else if(act==="savefromparse"){saveFromParse()}
+  else if(act==="gen"){await doGenerate()}
+  else if(act==="copy"){navigator.clipboard.writeText(S.gen.text).then(()=>{t.textContent="Скопировано";setTimeout(render,1200)})}
+  else if(act==="dl"){await doDownload()}
+  else if(act==="csv"){await doCsv()}
+  else if(act==="saveprofile"){await saveProfileForm()}
+  else if(act==="resetprofile"){await putProfile({...DEFAULT_PROFILE})}
+});
+
+function moveStage(job,stage){
+  const order=["radar","applied","screening","interview","final","offer"];
+  const j={...job,stage,updated:today(),demo:false};
+  if(order.indexOf(stage)>order.indexOf(j.maxStage||"radar"))j.maxStage=stage;
+  if(stage!=="radar"&&!j.applied)j.applied=today();
+  if(job.demo){ j.id=uid(); if(isDemoMode()) DEMO.filter(d=>d.id!==job.id).forEach(d=>S.jobs.push({...d,demo:false})); S.demoOff=true; putSettings(); }
+  if(S.open&&S.open.id===job.id)S.open=j;
+  putJob(j);
+}
+async function saveDrawer(){
+  const j={...S.open,updated:today(),demo:false};
+  document.querySelectorAll("[data-jf]").forEach(i=>{
+    const k=i.dataset.jf;
+    j[k] = k==="hebrew" ? i.value==="yes" : i.value;
+  });
+  if(!j.company&&!j.role){S.open=null;render();return}
+  S.open=null; await putJob(j);
+}
+function openNew(){
+  S.open={id:uid(),company:"",role:"",stage:"radar",source:"LinkedIn",area:"Центр (Гуш-Дан)",city:"",salary:"",
+    hebrew:false,url:"",next:"",nextDate:"",applied:"",updated:today(),notes:""};
+  render();
+}
+async function saveProfileForm(){
+  const p={...S.profile};
+  document.querySelectorAll("[data-pf]").forEach(i=>p[i.dataset.pf]=i.value);
+  await putProfile(p);
+}
+
+/* ---------- ИИ: разбор вакансии ---------- */
+function profileText(){
+  const p=S.profile;
+  return `Имя: ${p.name}\nТитул: ${p.title}\nГород: ${p.city}, Израиль\nИврит: ${p.hebrew} | Английский: ${p.english}\nЦелевые роли: ${p.targets}\nСаммари: ${p.summary}\nКлючевые результаты:\n${p.highlights}\nНавыки: ${p.skills}\nОбразование: ${p.education}`;
+}
+async function doParse(){
+  const raw=el("jd")?el("jd").value.trim():"";
+  S.parse.raw=raw;
+  if(!raw){S.parse.err="Вставь текст вакансии.";render();return}
+  if(!S.sample){S.parse.err="ИИ-разбор недоступен — заполни карточку вручную.";render();return}
+  S.parse.busy=true;S.parse.err="";render();
+  try{
+    const r=await S.sample.json(
+`Ты помогаешь продакт-менеджеру искать работу в израильском хайтеке.
+Вот её профиль:
+${profileText()}
+
+Вот текст вакансии:
+"""${raw.slice(0,12000)}"""
+
+Верни СТРОГО JSON без пояснений:
+{"company":"","role":"","city":"","area":"один из: Центр (Гуш-Дан) | Юг (Беэр-Шева / Негев) | Иерусалим | Север | Remote | Гибрид",
+ "salary":"вилка если указана, иначе пустая строка","hebrew":true|false,
+ "fit":0-100,"matches":["на русском, 3-5 пунктов чем её опыт прямо закрывает требования"],
+ "gaps":["на русском, 2-4 пункта чего не хватает и как это компенсировать в резюме"],
+ "keywords":["6-10 английских ключевых слов из вакансии для ATS"]}
+hebrew=true только если иврит явно требуется. fit оценивай честно, не завышай.`,
+      {modelTier:"default"});
+    S.parse.result=r;
+  }catch(err){
+    S.parse.err = err&&err.code==="rate_limited" ? "Слишком много запросов подряд — подожди минуту."
+      : err&&err.code==="not_granted" ? "Нет доступа к ИИ в этом просмотре."
+      : "Не получилось разобрать: "+((err&&err.message)||"неизвестная ошибка");
+  }
+  S.parse.busy=false;render();
+}
+function saveFromParse(){
+  const r=S.parse.result; if(!r)return;
+  const j={id:uid(),company:r.company||"",role:r.role||"",stage:"radar",source:"LinkedIn",
+    area:AREAS.includes(r.area)?r.area:"Центр (Гуш-Дан)",city:r.city||"",salary:r.salary||"",
+    hebrew:!!r.hebrew,url:"",next:"Откликнуться",nextDate:"",applied:"",updated:today(),
+    fit:typeof r.fit==="number"?r.fit:null,jd:(S.parse.raw||"").slice(0,8000),
+    notes:[(r.matches||[]).map(x=>"+ "+x).join("\n"),(r.gaps||[]).map(x=>"− "+x).join("\n")].filter(Boolean).join("\n\n")};
+  S.parse.result=null;S.parse.raw="";S.tab="pipeline";
+  if(isDemoMode()){S.demoOff=true;putSettings()}
+  putJob(j);
+}
+
+/* ---------- ИИ: документы ---------- */
+async function doGenerate(){
+  const jobs=visibleJobs().filter(j=>j.stage!=="rejected");
+  const j=jobs.find(x=>x.id===S.gen.jobId)||jobs[0];
+  if(!j){S.gen.err="Сначала добавь вакансию.";render();return}
+  if(!S.sample){S.gen.err="ИИ недоступен в этом просмотре.";render();return}
+  S.gen.jobId=j.id;S.gen.busy=true;S.gen.err="";S.gen.text="";render();
+
+  const jobText=`Компания: ${j.company}\nРоль: ${j.role}\nЛокация: ${j.city||j.area}\nИврит обязателен: ${j.hebrew?"да":"нет"}\nЗаметки: ${j.notes||"—"}\n${j.jd?"Текст вакансии:\n"+j.jd:""}`;
+  const langName={en:"English",he:"Hebrew (עברית)",ru:"русском"}[S.gen.lang];
+  const prompts={
+    cover:`Напиши cover letter на английском под эту вакансию. Максимум 200 слов, 3 абзаца, без клише вроде "I am writing to express my interest". Первый абзац — конкретный результат из её опыта, релевантный этой роли. Второй — как её опыт закрывает 2-3 главных требования вакансии. Третий — одна строка про то, почему именно эта компания. Без выдуманных фактов: используй только то, что есть в профиле.`,
+    resume:`Собери версию резюме под эту вакансию: (1) professional summary, 3 строки, на английском; (2) 6-8 буллетов опыта на английском, переупорядоченных и переформулированных под требования вакансии, с сохранением реальных цифр из профиля; (3) блок Skills — только релевантные этой вакансии; (4) в конце, на русском, короткий список "что я изменила и почему". Ничего не выдумывай.`,
+    outreach:`Напиши короткое сообщение хиринг-менеджеру или рекрутеру на ${langName} для отправки в LinkedIn. Максимум 90 слов, конкретно, без лести и без слова "passionate". Один измеримый результат из её опыта + чёткий вопрос в конце. Затем, на русском, одна строка совета — кому именно в этой компании писать.`,
+    prep:`Составь подготовку к интервью на эту роль, на русском: (1) 6 вопросов, которые ей почти наверняка зададут, с опорными тезисами ответа из её реального опыта; (2) 4 умных вопроса, которые стоит задать компании; (3) 2 слабых места её профиля под эту вакансию и как честно их отработать. Формат — простой текст, без markdown-таблиц.`
+  };
+  try{
+    const res=await S.sample(
+`Ты — карьерный консультант по израильскому хайтеку. Пиши по делу, без воды и без markdown-разметки со звёздочками.
+
+ПРОФИЛЬ КАНДИДАТА:
+${profileText()}
+
+ВАКАНСИЯ:
+${jobText}
+
+ЗАДАЧА:
+${prompts[S.gen.kind]}`,
+      {modelTier:"complex",onText:u=>{S.gen.text=u.text;const o=document.querySelector(".out");if(o)o.textContent=u.text;}});
+    S.gen.text=res.text;
+  }catch(err){
+    if(err&&err.text)S.gen.text=err.text;
+    S.gen.err = err&&err.code==="rate_limited" ? "Слишком много запросов — подожди минуту."
+      : err&&err.code==="not_granted" ? "Нет доступа к ИИ в этом просмотре."
+      : "Не получилось: "+((err&&err.message)||"неизвестная ошибка");
+  }
+  S.gen.busy=false;render();
+}
+
+/* ---------- выгрузка ---------- */
+async function doDownload(){
+  if(!S.downloads)return;
+  const j=visibleJobs().find(x=>x.id===S.gen.jobId);
+  const name=`${S.gen.kind}-${(j&&j.company||"job").replace(/[^\w-]+/g,"-").toLowerCase()}.txt`;
+  try{await S.downloads.save({filename:name,data:S.gen.text,request:"Сохранить сгенерированный документ"})}
+  catch(e){S.gen.err = e&&e.code==="declined" ? "Сохранение отменено." : "Не удалось сохранить файл.";render()}
+}
+async function doCsv(){
+  const rows=[["Компания","Роль","Стадия","Источник","Локация","Город","Вилка","Иврит","Отклик","След. шаг","Дедлайн","Fit","Ссылка","Заметки"]];
+  visibleJobs().forEach(j=>rows.push([j.company,j.role,STAGE[j.stage]?STAGE[j.stage].ru:j.stage,j.source,j.area,j.city,j.salary,
+    j.hebrew?"да":"нет",j.applied,j.next,j.nextDate,j.fit??"",j.url,(j.notes||"").replace(/\n/g," / ")]));
+  const csv="﻿"+rows.map(r=>r.map(c=>`"${String(c==null?"":c).replace(/"/g,'""')}"`).join(",")).join("\n");
+  if(S.downloads){
+    try{await S.downloads.save({filename:"job-pipeline.csv",data:csv,request:"Выгрузить пайплайн в CSV"});return}catch(e){}
+  }
+  try{await navigator.clipboard.writeText(csv);alert("Скачивание недоступно — CSV скопирован в буфер обмена. Вставь в Google Sheets.")}
+  catch(e){alert("Не удалось выгрузить файл в этом просмотре.")}
+}
+
+/* ---------- тема ---------- */
+function toggleTheme(){
+  const cur=document.documentElement.getAttribute("data-theme");
+  const dark=cur ? cur==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.setAttribute("data-theme",dark?"light":"dark");
+}
+
+/* ============================================================ СТАРТ ============================================================ */
+loadLocal();
+render();
+
+(async()=>{
+  try{ S.sample = await window.claude?.use?.("sample"); }catch(e){}
+  try{ S.downloads = await window.claude?.use?.("downloads"); }catch(e){}
+  let db=null; try{ db = await window.claude?.use?.("db"); }catch(e){}
+  if(db){
+    S.db=db;
+    try{
+      const p=await db.doc("profile/main").get();
+      if(p.exists&&p.data())S.profile={...DEFAULT_PROFILE,...p.data()};
+      const st=await db.doc("settings/main").get();
+      if(st.exists&&st.data())S.demoOff=!!st.data().demoOff;
+    }catch(e){console.warn("db read",e)}
+    try{
+      db.collection("jobs").onSnapshot(snap=>{
+        S.jobs=snap.docs.map(d=>({id:d.id,...d.data()}));
+        saveLocal(); render();
+      },err=>console.warn("db snapshot",err));
+    }catch(e){console.warn("db watch",e)}
+  }
+  render();
+})();
+</script>
