@@ -417,8 +417,8 @@ textarea { width: 100%; min-height: 220px; background: var(--surface); border: 1
     const v = deck.list[0];
     $("#cinfo").textContent = `Осталось: ${deck.list.length} · статус слова: ${STATUS[st(v.he)]}`;
     card.innerHTML = $("#cdir").value === "he"
-      ? `<div><div class="front-he" lang="he">${esc(v.he)}</div><div class="back" hidden><div class="tr">${esc(v.tr)}</div><div class="front-ru">${esc(v.ru)}</div>${v.root ? `<div class="hint">корень: <span class="root">${esc(v.root)}</span></div>` : ""}</div></div>`
-      : `<div><div class="front-ru">${esc(v.ru)}</div><div class="back" hidden><div class="bhe" lang="he">${esc(v.he)}</div><div class="tr">${esc(v.tr)}</div></div></div>`;
+      ? `<div><div class="front-he" lang="he">${esc(v.he)}</div><div class="back" hidden><div class="tr">${esc(v.tr)}</div><div class="front-ru">${esc(v.ru)}</div>${v.root ? `<div class="hint">корень: <span class="root">${esc(v.root)}</span></div>` : ""}${v.note ? `<div class="hint">${esc(v.note)}</div>` : ""}</div></div>`
+      : `<div><div class="front-ru">${esc(v.ru)}</div><div class="back" hidden><div class="bhe" lang="he">${esc(v.he)}</div><div class="tr">${esc(v.tr)}</div>${v.note ? `<div class="hint">${esc(v.note)}</div>` : ""}</div></div>`;
   }
   function flip() {
     if (!deck.list.length) { deck = null; return renderCard() }
