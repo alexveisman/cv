@@ -1,0 +1,541 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ульпан-тетрадь</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: study notebook — a sticky tab bar, then one working surface per tab.
+   Colors come from the sabra itself: cactus green + prickly-pear fruit. */
+:root {
+  --bg: #f6f7f3;
+  --surface: #ffffff;
+  --ink: #1f2a24;
+  --muted: #5f6b63;
+  --line: #dde2da;
+  --cactus: #2f6b4a;
+  --fruit: #b0315f;
+  --fruit-soft: #f7e4ec;
+  --cactus-soft: #e3efe7;
+  --warn-soft: #fbf0d9;
+  --font-he: "Frank Ruhl Libre", "David", "Times New Roman", serif;
+  --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141a17; --surface: #1c2420; --ink: #e6ece7; --muted: #9aa79f; --line: #2e3a33;
+  --cactus: #7cc39a; --fruit: #f07aa5; --fruit-soft: #3a1f2b; --cactus-soft: #1f3328; --warn-soft: #3a3120;
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141a17; --surface: #1c2420; --ink: #e6ece7; --muted: #9aa79f; --line: #2e3a33;
+  --cactus: #7cc39a; --fruit: #f07aa5; --fruit-soft: #3a1f2b; --cactus-soft: #1f3328; --warn-soft: #3a3120;
+  color-scheme: dark }
+
+* { box-sizing: border-box }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-ui) }
+.wrap { max-width: 1100px; margin: 0 auto; padding-inline: 16px; padding-block: 0 48px }
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; padding-block: 20px 8px }
+header.top h1 { margin: 0; font: 600 20px/1.2 var(--font-ui); letter-spacing: -.01em }
+header.top h1 span { color: var(--cactus) }
+select, input, textarea, button { font: inherit; color: inherit }
+select, input[type=search] { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; min-width: 0 }
+.textpick { flex: 1 1 260px; display: flex; gap: 8px; align-items: center; min-width: 0 }
+.textpick select { flex: 1; min-width: 0 }
+
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; margin-bottom: 16px }
+nav.tabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 10px 12px; cursor: pointer; color: var(--muted); white-space: nowrap; font-weight: 500 }
+nav.tabs button[aria-selected=true] { color: var(--ink); border-color: var(--fruit) }
+button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible, .w:focus-visible { outline: 2px solid var(--fruit); outline-offset: 2px }
+
+.btn { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; cursor: pointer }
+.btn:hover { border-color: var(--muted) }
+.btn.primary { background: var(--cactus); border-color: var(--cactus); color: var(--bg) }
+.btn.danger { color: var(--fruit) }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 12px; color: var(--muted); font-size: 14px }
+.toolbar label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer }
+.hint { color: var(--muted); font-size: 13px }
+
+/* Text tab */
+h2.sec { font: 600 13px/1.3 var(--font-ui); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 28px 0 8px }
+.title-he { font: 700 34px/1.2 var(--font-he); direction: rtl; margin: 4px 0 0 }
+.title-ru { color: var(--muted); margin: 0 0 8px }
+.line { display: grid; grid-template-columns: 2.2em minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.1fr); gap: 4px 20px; padding: 12px 0; border-top: 1px solid var(--line); align-items: start }
+.line .num { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; padding-top: 6px; display: flex; flex-direction: column; gap: 4px; align-items: flex-start }
+.he { font: 400 22px/1.6 var(--font-he); direction: rtl; text-align: right; grid-column: 2; min-width: 0 }
+.tr { font-style: italic; color: var(--cactus); min-width: 0 }
+.ru { min-width: 0 }
+.line .he { order: 0 }
+.hide-tr .tr, .hide-ru .ru { display: none }
+.hide-tr .line, .hide-ru .line { grid-template-columns: 2.2em minmax(0, 1.3fr) minmax(0, 1fr) }
+.hide-tr.hide-ru .line { grid-template-columns: 2.2em minmax(0, 1fr) }
+.quiz .ru, .quiz .tr { filter: blur(6px); cursor: pointer; transition: filter .15s }
+.quiz .revealed .ru, .quiz .revealed .tr { filter: none }
+.say { background: none; border: 1px solid var(--line); border-radius: 50%; width: 26px; height: 26px; padding: 0; cursor: pointer; color: var(--cactus); font-size: 11px; line-height: 1 }
+.w { border-bottom: 2px dotted var(--fruit); cursor: pointer; border-radius: 2px }
+.w:hover, .w.on { background: var(--fruit-soft) }
+.w.known { border-bottom-color: var(--cactus) }
+
+@media (max-width: 760px) {
+  .line, .hide-tr .line, .hide-ru .line, .hide-tr.hide-ru .line { grid-template-columns: 1.8em minmax(0, 1fr) }
+  .he, .tr, .ru { grid-column: 2 }
+  .line .num { grid-row: 1 / span 3 }
+  .he { font-size: 21px }
+}
+
+/* Word popover */
+#pop { position: fixed; z-index: 20; inset: auto 16px calc(16px + env(safe-area-inset-bottom, 0px)) 16px; max-width: 420px; margin-inline: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; box-shadow: 0 10px 30px rgba(0,0,0,.18) }
+#pop .big { font: 700 28px/1.2 var(--font-he); direction: rtl; text-align: right }
+#pop .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px }
+.root { font-family: var(--font-he); direction: rtl; unicode-bidi: isolate; color: var(--muted) }
+
+/* Words tab */
+.tbl-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px }
+table { width: 100%; border-collapse: collapse; min-width: 560px }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600 }
+td.he-cell { font: 400 20px/1.4 var(--font-he); direction: rtl; text-align: right; white-space: nowrap }
+td .note { color: var(--muted); font-size: 13px }
+.chip { display: inline-block; border-radius: 99px; padding: 2px 10px; font-size: 12px; font-weight: 500; border: 0; cursor: pointer; white-space: nowrap }
+.chip.s0 { background: var(--warn-soft) }
+.chip.s1 { background: var(--fruit-soft); color: var(--fruit) }
+.chip.s2 { background: var(--cactus-soft); color: var(--cactus) }
+.stats { display: flex; gap: 16px; flex-wrap: wrap; font-variant-numeric: tabular-nums }
+
+/* Cards tab */
+.cardzone { max-width: 560px; margin: 0 auto; display: grid; gap: 14px }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; min-height: 230px; padding: 24px; display: grid; place-items: center; text-align: center; cursor: pointer; user-select: none }
+.card .front-he { font: 700 44px/1.2 var(--font-he); direction: rtl }
+.card .front-ru { font-size: 24px; font-weight: 500 }
+.card .back { margin-top: 14px; display: grid; gap: 6px }
+.card .back .tr { font-size: 18px }
+.card .back .bhe { font: 700 34px/1.2 var(--font-he); direction: rtl }
+.answer { display: grid; grid-template-columns: 1fr 1fr; gap: 10px }
+.answer .btn { padding: 12px; font-weight: 600 }
+.progress { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden }
+.progress i { display: block; height: 100%; background: var(--cactus) }
+
+/* Add tab */
+textarea { width: 100%; min-height: 220px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px; font: 13px/1.45 ui-monospace, Menlo, monospace }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: grid; gap: 10px; margin-bottom: 16px }
+.panel h3 { margin: 0; font-size: 16px }
+.panel ol { margin: 0; padding-left: 20px }
+.msg { font-size: 14px }
+.msg.err { color: var(--fruit) }
+.msg.ok { color: var(--cactus) }
+.mylist { display: grid; gap: 6px }
+.mylist div { display: flex; gap: 10px; align-items: center; flex-wrap: wrap }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Ульпан<span>·</span>тетрадь</h1>
+    <div class="textpick">
+      <label for="textSel" class="hint">Текст:</label>
+      <select id="textSel"></select>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="text" aria-selected="true">Текст</button>
+    <button role="tab" data-tab="words" aria-selected="false">Слова</button>
+    <button role="tab" data-tab="cards" aria-selected="false">Карточки</button>
+    <button role="tab" data-tab="add" aria-selected="false">Добавить текст</button>
+  </nav>
+
+  <section id="tab-text">
+    <div class="toolbar">
+      <label><input type="checkbox" id="optTr" checked> транслитерация</label>
+      <label><input type="checkbox" id="optRu" checked> перевод</label>
+      <label><input type="checkbox" id="optQuiz"> режим проверки (перевод размыт, нажми — откроется)</label>
+    </div>
+    <p class="hint">Подчёркнутые слова есть в словаре — нажми, чтобы увидеть перевод. Кнопка ▶ читает строку вслух (если в устройстве есть голос иврита).</p>
+    <div id="textOut"></div>
+  </section>
+
+  <section id="tab-words" hidden>
+    <div class="toolbar">
+      <input type="search" id="wq" placeholder="Поиск: иврит, русский, корень…">
+      <select id="wfilter">
+        <option value="all">Все слова</option>
+        <option value="0">Новые</option>
+        <option value="1">Учу</option>
+        <option value="2">Знаю</option>
+      </select>
+      <div class="stats" id="wstats"></div>
+    </div>
+    <p class="hint">Нажми на статус, чтобы переключить: новое → учу → знаю.</p>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Иврит</th><th>Произношение</th><th>Перевод</th><th>Корень</th><th>Статус</th></tr></thead>
+      <tbody id="wbody"></tbody>
+    </table></div>
+  </section>
+
+  <section id="tab-cards" hidden>
+    <div class="toolbar">
+      <select id="cdir">
+        <option value="he">Иврит → русский</option>
+        <option value="ru">Русский → иврит</option>
+      </select>
+      <select id="cset">
+        <option value="todo">Только невыученные</option>
+        <option value="all">Все слова</option>
+      </select>
+    </div>
+    <div class="cardzone">
+      <div class="progress"><i id="cbar"></i></div>
+      <div class="hint" id="cinfo"></div>
+      <div class="card" id="card" tabindex="0"></div>
+      <div class="answer">
+        <button class="btn" id="cno">Не помню</button>
+        <button class="btn primary" id="cyes">Помню</button>
+      </div>
+      <p class="hint">Нажми на карточку, чтобы перевернуть. «Помню» два раза подряд — слово переходит в «знаю». Клавиши: пробел — перевернуть, ← не помню, → помню.</p>
+    </div>
+  </section>
+
+  <section id="tab-add" hidden>
+    <div class="panel">
+      <h3>Как добавить новый текст</h3>
+      <ol>
+        <li>Сфотографируй страницы учебника.</li>
+        <li>Отправь фото Claude вместе с промптом ниже (кнопка копирует его).</li>
+        <li>Claude ответит блоком JSON. Вставь его в поле и нажми «Добавить».</li>
+      </ol>
+      <div><button class="btn" id="copyPrompt">Скопировать промпт для Claude</button> <span class="msg" id="copyMsg"></span></div>
+      <textarea id="promptBox" readonly hidden></textarea>
+    </div>
+    <div class="panel">
+      <h3>Вставь JSON нового текста</h3>
+      <textarea id="jsonIn" placeholder='{ "id": "...", "title": "...", "titleRu": "...", "sections": [...], "vocab": [...] }'></textarea>
+      <div><button class="btn primary" id="addBtn">Добавить</button> <span class="msg" id="addMsg"></span></div>
+      <p class="hint">Добавленные тексты хранятся только в этом браузере. Чтобы текст остался навсегда и был на всех устройствах, его кладут файлом в папку <code>hebrew/texts/</code> репозитория.</p>
+    </div>
+    <div class="panel">
+      <h3>Мои добавленные тексты</h3>
+      <div class="mylist" id="mylist"></div>
+    </div>
+  </section>
+</div>
+
+<div id="pop" hidden></div>
+
+<script src="texts/tzabar.js"></script>
+<script>
+(function () {
+  "use strict";
+  // ---------- storage (может быть недоступно — всё работает и без него) ----------
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem("ulpan:" + k); return v ? JSON.parse(v) : d } catch (e) { return d } },
+    set(k, v) { try { localStorage.setItem("ulpan:" + k, JSON.stringify(v)) } catch (e) {} }
+  };
+  const builtIn = (window.HEB_TEXTS || []).slice();
+  let imported = store.get("imported", []);
+  const allTexts = () => builtIn.concat(imported);
+
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  let cur = null;     // текущий текст
+  let prog = {};      // {heWord: {s: 0|1|2, streak: n}}
+
+  const STATUS = ["новое", "учу", "знаю"];
+  const st = he => (prog[he] && prog[he].s) || 0;
+  function setSt(he, s, streak) { prog[he] = { s, streak: streak || 0 }; store.set("prog:" + cur.id, prog) }
+
+  // ---------- выбор текста ----------
+  function fillSelect() {
+    const sel = $("#textSel");
+    sel.innerHTML = allTexts().map(t => `<option value="${esc(t.id)}">${esc(t.titleRu || t.title)} · ${esc(t.title)}</option>`).join("");
+    if (cur) sel.value = cur.id;
+  }
+  function openText(id) {
+    cur = allTexts().find(t => t.id === id) || allTexts()[0];
+    if (!cur) return;
+    prog = store.get("prog:" + cur.id, {});
+    store.set("last", cur.id);
+    $("#textSel").value = cur.id;
+    buildMatcher();
+    renderText(); renderWords(); deck = null; renderCard();
+  }
+  $("#textSel").addEventListener("change", e => openText(e.target.value));
+
+  // ---------- поиск слов словаря внутри предложений ----------
+  // Ищем каждую форму слова; перед ней можно до 3 приставок (ו ה ב ל מ ש כ).
+  let forms = [];
+  function buildMatcher() {
+    forms = [];
+    cur.vocab.forEach((v, i) => (v.forms || [v.he]).forEach(f => forms.push({ f, i })));
+    forms.sort((a, b) => b.f.length - a.f.length);
+  }
+  const BEFORE = /[\s"'«(\-—–־]/, AFTER = /[\s.,:;!?"'»)\-—–־…]/;
+  function markWords(text) {
+    const hits = [];
+    forms.forEach(({ f, i }) => {
+      let from = 0, pos;
+      while ((pos = text.indexOf(f, from)) !== -1) {
+        from = pos + 1;
+        const end = pos + f.length;
+        if (end < text.length && !AFTER.test(text[end])) continue;
+        let s = pos, k = 0;
+        while (s > 0 && k < 3 && "והבלמשכ".includes(text[s - 1])) { s--; k++ }
+        if (s > 0 && !BEFORE.test(text[s - 1])) continue;
+        if (hits.some(h => s < h.e && end > h.s)) continue;
+        hits.push({ s, e: end, i });
+      }
+    });
+    hits.sort((a, b) => a.s - b.s);
+    let out = "", p = 0;
+    hits.forEach(h => {
+      out += esc(text.slice(p, h.s));
+      const v = cur.vocab[h.i];
+      out += `<span class="w${st(v.he) === 2 ? " known" : ""}" data-v="${h.i}" tabindex="0">${esc(text.slice(h.s, h.e))}</span>`;
+      p = h.e;
+    });
+    return out + esc(text.slice(p));
+  }
+
+  // ---------- вкладка «Текст» ----------
+  const opts = store.get("opts", { tr: true, ru: true, quiz: false });
+  $("#optTr").checked = opts.tr; $("#optRu").checked = opts.ru; $("#optQuiz").checked = opts.quiz;
+  function applyOpts() {
+    const o = $("#textOut");
+    o.classList.toggle("hide-tr", !opts.tr);
+    o.classList.toggle("hide-ru", !opts.ru);
+    o.classList.toggle("quiz", opts.quiz);
+  }
+  ["Tr", "Ru", "Quiz"].forEach(n => $("#opt" + n).addEventListener("change", e => {
+    opts[n.toLowerCase()] = e.target.checked; store.set("opts", opts); applyOpts();
+    o_reset();
+  }));
+  function o_reset() { document.querySelectorAll(".line.revealed").forEach(l => l.classList.remove("revealed")) }
+
+  function renderText() {
+    let n = 0, html = `<p class="title-he">${esc(cur.title)}</p><p class="title-ru">${esc(cur.titleRu || "")}${cur.source ? " · " + esc(cur.source) : ""}</p>`;
+    cur.sections.forEach(sec => {
+      if (sec.title) html += `<h2 class="sec">${esc(sec.title)}</h2>`;
+      sec.lines.forEach(l => {
+        n++;
+        html += `<div class="line"><div class="num">${n}<button class="say" data-say="${esc(l.he)}" aria-label="Прочитать вслух">▶</button></div>
+          <div class="he" lang="he">${markWords(l.he)}</div>
+          <div class="tr">${esc(l.tr)}</div>
+          <div class="ru">${esc(l.ru)}${l.note ? `<div class="hint">${esc(l.note)}</div>` : ""}</div></div>`;
+      });
+    });
+    $("#textOut").innerHTML = html;
+    applyOpts();
+  }
+  $("#textOut").addEventListener("click", e => {
+    const say = e.target.closest(".say"); if (say) return speak(say.dataset.say);
+    const w = e.target.closest(".w"); if (w) return showPop(+w.dataset.v, w);
+    const line = e.target.closest(".line");
+    if (line && opts.quiz && e.target.closest(".ru,.tr")) line.classList.toggle("revealed");
+  });
+  $("#textOut").addEventListener("keydown", e => {
+    if (e.key === "Enter" && e.target.classList.contains("w")) showPop(+e.target.dataset.v, e.target);
+  });
+
+  // ---------- озвучка ----------
+  function speak(text) {
+    try {
+      const synth = window.speechSynthesis; if (!synth) return;
+      synth.cancel();
+      const u = new SpeechSynthesisUtterance(text.replace(/\([^)]*\)/g, ""));
+      u.lang = "he-IL"; u.rate = 0.85;
+      const v = synth.getVoices().find(v => /^he|^iw/i.test(v.lang)); if (v) u.voice = v;
+      synth.speak(u);
+    } catch (e) {}
+  }
+
+  // ---------- всплывающая карточка слова ----------
+  let popWord = null;
+  function showPop(i, el) {
+    document.querySelectorAll(".w.on").forEach(x => x.classList.remove("on"));
+    if (el) el.classList.add("on");
+    const v = cur.vocab[i]; popWord = v;
+    $("#pop").innerHTML = `<div class="big" lang="he">${esc(v.he)}</div>
+      <div class="tr">${esc(v.tr)}</div><div>${esc(v.ru)}</div>
+      ${v.root ? `<div class="hint">корень: <span class="root">${esc(v.root)}</span></div>` : ""}
+      ${v.note ? `<div class="hint">${esc(v.note)}</div>` : ""}
+      <div class="row"><button class="btn" data-a="say">▶ Произнести</button>
+      <button class="chip s${st(v.he)}" data-a="st">${STATUS[st(v.he)]}</button>
+      <button class="btn" data-a="close" style="margin-left:auto">Закрыть</button></div>`;
+    $("#pop").hidden = false;
+  }
+  $("#pop").addEventListener("click", e => {
+    const a = e.target.dataset.a; if (!a) return;
+    if (a === "say") speak(popWord.he.replace(/[\/־].*$/, ""));
+    if (a === "close") { $("#pop").hidden = true; document.querySelectorAll(".w.on").forEach(x => x.classList.remove("on")) }
+    if (a === "st") { setSt(popWord.he, (st(popWord.he) + 1) % 3); showPop(cur.vocab.indexOf(popWord), document.querySelector(".w.on")); renderWords(); refreshKnown() }
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") $("#pop").hidden = true });
+  function refreshKnown() {
+    document.querySelectorAll("#textOut .w").forEach(w => w.classList.toggle("known", st(cur.vocab[+w.dataset.v].he) === 2));
+  }
+
+  // ---------- вкладка «Слова» ----------
+  function renderWords() {
+    const q = $("#wq").value.trim().toLowerCase(), f = $("#wfilter").value;
+    const rows = cur.vocab.map((v, i) => ({ v, i })).filter(({ v }) =>
+      (f === "all" || st(v.he) === +f) &&
+      (!q || [v.he, v.tr, v.ru, v.root, v.note].join(" ").toLowerCase().includes(q)));
+    $("#wbody").innerHTML = rows.map(({ v, i }) => `<tr>
+      <td class="he-cell" lang="he">${esc(v.he)}</td>
+      <td class="tr">${esc(v.tr)}</td>
+      <td>${esc(v.ru)}${v.note ? `<div class="note">${esc(v.note)}</div>` : ""}</td>
+      <td class="root">${esc(v.root || "")}</td>
+      <td><button class="chip s${st(v.he)}" data-i="${i}">${STATUS[st(v.he)]}</button></td></tr>`).join("")
+      || `<tr><td colspan="5" class="hint">Ничего не найдено.</td></tr>`;
+    const c = [0, 0, 0]; cur.vocab.forEach(v => c[st(v.he)]++);
+    $("#wstats").innerHTML = `<span>Всего: <b>${cur.vocab.length}</b></span><span>новые: <b>${c[0]}</b></span><span>учу: <b>${c[1]}</b></span><span>знаю: <b>${c[2]}</b></span>`;
+  }
+  $("#wq").addEventListener("input", renderWords);
+  $("#wfilter").addEventListener("change", renderWords);
+  $("#wbody").addEventListener("click", e => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    const v = cur.vocab[+b.dataset.i]; setSt(v.he, (st(v.he) + 1) % 3); renderWords(); refreshKnown();
+  });
+
+  // ---------- вкладка «Карточки» ----------
+  let deck = null, flipped = false;
+  function makeDeck() {
+    const all = cur.vocab.filter(v => $("#cset").value === "all" || st(v.he) < 2);
+    for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [all[i], all[j]] = [all[j], all[i]] }
+    deck = { list: all, total: all.length, done: 0 };
+  }
+  function renderCard() {
+    if (!cur) return;
+    if (!deck) makeDeck();
+    const card = $("#card"); flipped = false;
+    const pct = deck.total ? Math.round(deck.done / deck.total * 100) : 100;
+    $("#cbar").style.width = pct + "%";
+    if (!deck.list.length) {
+      card.innerHTML = `<div><div class="front-ru">Круг пройден!</div><p class="hint">Слов в круге: ${deck.total}. Нажми, чтобы начать заново.</p></div>`;
+      $("#cinfo").textContent = ""; $("#cyes").disabled = $("#cno").disabled = true;
+      return;
+    }
+    $("#cyes").disabled = $("#cno").disabled = false;
+    const v = deck.list[0];
+    $("#cinfo").textContent = `Осталось: ${deck.list.length} · статус слова: ${STATUS[st(v.he)]}`;
+    card.innerHTML = $("#cdir").value === "he"
+      ? `<div><div class="front-he" lang="he">${esc(v.he)}</div><div class="back" hidden><div class="tr">${esc(v.tr)}</div><div class="front-ru">${esc(v.ru)}</div>${v.root ? `<div class="hint">корень: <span class="root">${esc(v.root)}</span></div>` : ""}</div></div>`
+      : `<div><div class="front-ru">${esc(v.ru)}</div><div class="back" hidden><div class="bhe" lang="he">${esc(v.he)}</div><div class="tr">${esc(v.tr)}</div></div></div>`;
+  }
+  function flip() {
+    if (!deck.list.length) { deck = null; return renderCard() }
+    flipped = !flipped; const b = $("#card .back"); if (b) b.hidden = !flipped;
+    if (flipped && $("#cdir").value === "he") speak(deck.list[0].he.replace(/[\/־].*$/, ""));
+  }
+  function answer(ok) {
+    if (!deck.list.length) return;
+    const v = deck.list.shift(), p = prog[v.he] || { s: 0, streak: 0 };
+    if (ok) {
+      const streak = p.streak + 1;
+      setSt(v.he, streak >= 2 ? 2 : 1, streak);
+      deck.done++;
+    } else {
+      setSt(v.he, 1, 0);
+      deck.list.splice(Math.min(3, deck.list.length), 0, v); // вернётся через пару карточек
+    }
+    renderCard(); renderWords(); refreshKnown();
+  }
+  $("#card").addEventListener("click", flip);
+  $("#cyes").addEventListener("click", () => answer(true));
+  $("#cno").addEventListener("click", () => answer(false));
+  $("#cdir").addEventListener("change", renderCard);
+  $("#cset").addEventListener("change", () => { deck = null; renderCard() });
+  document.addEventListener("keydown", e => {
+    if ($("#tab-cards").hidden || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    if (e.key === " ") { e.preventDefault(); flip() }
+    if (e.key === "ArrowRight") answer(true);
+    if (e.key === "ArrowLeft") answer(false);
+  });
+
+  // ---------- вкладка «Добавить текст» ----------
+  const PROMPT = `Сделай из текста на фото учебный материал для моего приложения «Ульпан-тетрадь».
+Ответь ОДНИМ блоком JSON без пояснений, строго в таком формате:
+{
+  "id": "латиница-без-пробелов",
+  "title": "заголовок на иврите",
+  "titleRu": "заголовок по-русски",
+  "source": "откуда текст",
+  "sections": [
+    { "title": "Текст", "lines": [
+      { "he": "одно предложение на иврите, точно как в книге",
+        "tr": "транслитерация кириллицей, ударение знаком ́, звук ה — латинская h, приставки через дефис (ве-, ха-, бе-, ле-, ше-)",
+        "ru": "естественный перевод на русский" }
+    ]}
+  ],
+  "vocab": [
+    { "he": "слово в словарной форме (глагол — инфинитив)", "tr": "транслитерация", "ru": "перевод",
+      "root": "к-о-р (если есть)", "note": "необязательно: пояснение",
+      "forms": ["форма, как она встречается в тексте, без приставок ו ה ב ל מ ש כ"] }
+  ]
+}
+Правила: делим текст на предложения; идиомы, упражнения и подписи — отдельными разделами; в словарь — все слова, которые может не знать ученик уровня ульпана Алеф–Бет (обычно 60–120 слов). Если в фото что-то не читается — пометь в "note".`;
+  $("#copyPrompt").addEventListener("click", () => {
+    const box = $("#promptBox"); box.value = PROMPT;
+    const done = t => { $("#copyMsg").textContent = t };
+    try {
+      navigator.clipboard.writeText(PROMPT).then(() => done("Скопировано."), () => { box.hidden = false; box.select(); done("Не удалось скопировать автоматически — текст выделен, скопируй вручную.") });
+    } catch (e) { box.hidden = false; box.select(); done("Скопируй текст из поля вручную.") }
+  });
+
+  function validate(t) {
+    if (!t || typeof t !== "object") return "Это не объект JSON.";
+    if (!t.id || !t.title) return "Нет полей id или title.";
+    if (!Array.isArray(t.sections) || !t.sections.length) return "Нет списка sections.";
+    for (const s of t.sections) {
+      if (!Array.isArray(s.lines)) return "В одном из разделов нет lines.";
+      for (const l of s.lines) if (!l.he) return "В одной из строк нет поля he.";
+    }
+    if (!Array.isArray(t.vocab)) t.vocab = [];
+    return null;
+  }
+  $("#addBtn").addEventListener("click", () => {
+    const msg = $("#addMsg"); msg.className = "msg";
+    let raw = $("#jsonIn").value.trim().replace(/^```(?:json)?\s*|\s*```$/g, "");
+    let t; try { t = JSON.parse(raw) } catch (e) { msg.classList.add("err"); msg.textContent = "JSON не читается: " + e.message + ". Проверь, что скопирован весь блок, от { до }."; return }
+    const err = validate(t); if (err) { msg.classList.add("err"); msg.textContent = err; return }
+    if (builtIn.some(b => b.id === t.id)) t.id += "-2";
+    imported = imported.filter(x => x.id !== t.id).concat(t);
+    store.set("imported", imported);
+    fillSelect(); openText(t.id); renderMy();
+    msg.classList.add("ok"); msg.textContent = `Добавлено: «${t.titleRu || t.title}», ${t.sections.reduce((n, s) => n + s.lines.length, 0)} строк, ${t.vocab.length} слов.`;
+    $("#jsonIn").value = "";
+  });
+  let confirmId = null;
+  function renderMy() {
+    $("#mylist").innerHTML = imported.length ? imported.map(t => `<div><b>${esc(t.titleRu || t.title)}</b> <span class="hint">${esc(t.title)}</span>
+      ${confirmId === t.id
+        ? `<span class="msg err">Удалить текст и прогресс?</span><button class="btn danger" data-del="${esc(t.id)}">Да, удалить</button><button class="btn" data-cancel="1">Отмена</button>`
+        : `<button class="btn" data-ask="${esc(t.id)}">Удалить</button>`}</div>`).join("")
+      : `<span class="hint">Пока нет. Встроенный текст «Кто такой цабар?» удалить нельзя.</span>`;
+  }
+  $("#mylist").addEventListener("click", e => {
+    const d = e.target.dataset;
+    if (d.ask) confirmId = d.ask;
+    if (d.cancel) confirmId = null;
+    if (d.del) {
+      imported = imported.filter(t => t.id !== d.del); store.set("imported", imported);
+      try { localStorage.removeItem("ulpan:prog:" + d.del) } catch (e) {}
+      confirmId = null; fillSelect(); if (cur.id === d.del) openText(builtIn[0].id);
+    }
+    renderMy();
+  });
+
+  // ---------- вкладки ----------
+  function showTab(name) {
+    document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === name));
+    ["text", "words", "cards", "add"].forEach(n => $("#tab-" + n).hidden = n !== name);
+    $("#pop").hidden = true;
+    store.set("tab", name);
+  }
+  document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+
+  fillSelect();
+  openText(store.get("last", builtIn[0] && builtIn[0].id));
+  renderMy();
+  const hashTab = location.hash.slice(1);
+  showTab(["text", "words", "cards", "add"].includes(hashTab) ? hashTab : store.get("tab", "text"));
+  try { speechSynthesis.getVoices() } catch (e) {}
+})();
+</script>
