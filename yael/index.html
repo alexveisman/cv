@@ -150,6 +150,7 @@ select,input[type="text"]{padding:8px 10px;border:1px solid var(--line);border-r
 .task.ok .check{background:var(--ok);border-color:var(--ok)}
 @media (max-width:520px){.task{flex-wrap:wrap}.task .btn{margin-inline-start:42px}}
 .panel.ready{border-color:var(--ok);background:var(--ok-soft)}
+a{color:var(--accent);text-underline-offset:3px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:8px;font-size:14px;z-index:20;max-width:calc(100% - 32px)}
 @media (prefers-reduced-motion:no-preference){.q,.panel{animation:rise .18s ease-out}@keyframes rise{from{transform:translateY(4px);opacity:.6}to{transform:none;opacity:1}}}
 </style>
@@ -564,6 +565,12 @@ function renderHome(){
     <div class="panel"><h3>Сочинение</h3><p class="small muted">15 минут, тема как на экзамене. Claude оценит по 4 критериям NITE и исправит ошибки.</p><button class="btn primary" data-go="essay">Написать</button></div>
     <div class="panel"><h3>Связки</h3><p class="small muted">48 слов вроде <span class="he">אלא, אמנם, שכן, לולא</span>. Почти в каждом вопросе одно из них решает ответ.</p><button class="btn primary" data-go="cards">Учить</button></div>
   </div>
+  <h2>Где читать на иврите</h2>
+  <div class="grid2">
+    <div class="panel"><div class="eyebrow">Сейчас · бет–гимель</div><h3><a href="https://hadshon.education.gov.il" target="_blank" rel="noopener">החדשון בעברית קלה</a></h3><p class="small muted">Новости на простом иврите для изучающих язык, от Министерства образования. Продолжение газеты «שער למתחיל».</p></div>
+    <div class="panel"><div class="eyebrow">Через 6–8 недель · стиль экзамена</div><h3><a href="https://davidson.weizmann.ac.il" target="_blank" rel="noopener">מכון דוידסון</a></h3><p class="small muted">Научно-популярные статьи Института Вейцмана. По стилю ближе всего к текстам YAEL.</p></div>
+  </div>
+  <p class="note">Как читать: сначала целиком без словаря, потом угадать слова по корню и контексту, проверить в словаре не больше 10 и пересказать текст в 2 предложениях.</p>
   <h2>Стратегия на экзамене</h2>
   <div class="panel">
     <p><b>Около 55 секунд на вопрос.</b> 22 вопроса за 20 минут. Дополнение и перефразирование решайте быстро, чтобы на текст осталось 7–8 минут.</p>
@@ -915,7 +922,7 @@ function tasksFor(date){
     return (m?[{id:"mistakes",k:"mistakes",need:1,label:"Мои ошибки ("+m+")",note:"Повторить вопросы, где вы ошиблись.",start:"mistakes",min:15}]:[])
       .concat([{id:"rs",k:"rs",need:m?1:2,label:m?"Блок «Перефразирование»":"2 блока «Перефразирование»",note:"Ищите вариант с тем же смыслом: не больше и не меньше.",start:"rs",min:m?15:30}]);
   }
-  if(i===4) return [{id:"reading",manual:true,label:"30 минут чтения на иврите",note:"Новости, статья или «שער למתחיל». Для удовольствия, без заданий.",min:30}];
+  if(i===4) return [{id:"reading",manual:true,label:"30 минут чтения на иврите",note:"Новости на החדשון (ссылка на «Главной»), статья или Википедия. Для удовольствия, без заданий.",min:30}];
   return [];
 }
 function taskDone(t,date){
