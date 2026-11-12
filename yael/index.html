@@ -131,6 +131,25 @@ td.he{font-size:18px}
 .note{font-size:13px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px;margin:10px 0;max-width:70ch}
 .confirm{display:inline-flex;gap:8px;align-items:center;flex-wrap:wrap}
 select,input[type="text"]{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--sheet)}
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:14px}
+.day{display:grid;justify-items:center;gap:4px;padding:8px 0;border:1px solid var(--line);border-radius:8px;background:var(--sheet);font-size:12px;color:var(--muted)}
+.day i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--drop)}
+.day b{font-size:13px;color:var(--ink)}
+.day.done i{background:var(--ok);border-color:var(--ok)}
+.day.part i{background:linear-gradient(90deg,var(--ok) 50%,transparent 50%);border-color:var(--ok)}
+.day.none i{border-color:var(--bad)}
+.day.rest i{border-style:dashed;border-color:var(--line)}
+.day.today{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.tasks{display:grid;gap:8px}
+.task{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--sheet)}
+.task .tbody{flex:1;min-width:0}
+.task .tl{font-weight:600}
+.task.ok{background:var(--ok-soft);border-color:var(--ok)}
+.task.ok .tl{text-decoration:line-through;text-decoration-color:var(--ok)}
+.check{flex:none;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--drop);background:var(--sheet);color:var(--sheet);font-weight:700;cursor:pointer}
+.task.ok .check{background:var(--ok);border-color:var(--ok)}
+@media (max-width:520px){.task{flex-wrap:wrap}.task .btn{margin-inline-start:42px}}
+.panel.ready{border-color:var(--ok);background:var(--ok-soft)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:8px;font-size:14px;z-index:20;max-width:calc(100% - 32px)}
 @media (prefers-reduced-motion:no-preference){.q,.panel{animation:rise .18s ease-out}@keyframes rise{from{transform:translateY(4px);opacity:.6}to{transform:none;opacity:1}}}
 </style>
@@ -142,6 +161,7 @@ select,input[type="text"]{padding:8px 10px;border:1px solid var(--line);border-r
   </header>
   <nav class="tabs" role="tablist" id="tabs">
     <button role="tab" data-tab="home">Главная</button>
+    <button role="tab" data-tab="plan">План</button>
     <button role="tab" data-tab="practice">Тренировка</button>
     <button role="tab" data-tab="sim">Экзамен</button>
     <button role="tab" data-tab="essay">Сочинение</button>
@@ -389,7 +409,7 @@ const TYPE_HE={sc:"השלמת משפטים",rs:"ניסוח מחדש",rc:"הבנ�
    СОСТОЯНИЕ И ХРАНЕНИЕ
    ============================================================ */
 const LS="yael-trainer-v1";
-let S={stats:{},sims:[],essays:[],cards:{},gen:{sc:[],rs:[],rc:[]}};
+let S={stats:{},sims:[],essays:[],cards:{},gen:{sc:[],rs:[],rc:[]},plan:{start:null,target:null,weekend:"fs"},log:{}};
 let DB=null, UID=null, SAMPLE=null, saveT=null;
 try{const raw=localStorage.getItem(LS); if(raw) S=Object.assign(S,JSON.parse(raw));}catch(e){}
 
@@ -400,7 +420,7 @@ function persist(){
     if(DB&&UID){
       const base="data/users/"+UID+"/";
       try{
-        await DB.doc(base+"progress").set({stats:S.stats,sims:S.sims.slice(-60),cards:S.cards});
+        await DB.doc(base+"progress").set({stats:S.stats,sims:S.sims.slice(-60),cards:S.cards,plan:S.plan,log:trimLog()});
         await DB.doc(base+"essays").set({list:S.essays.slice(-30)});
         await DB.doc(base+"generated").set(S.gen);
         setSync("Сохранено в вашем аккаунте Claude");
@@ -538,6 +558,7 @@ function renderHome(){
   </div>
   <h2>С чего начать</h2>
   <div class="grid2">
+    <div class="panel"><h3>План на сегодня</h3><p class="small muted">Ежедневная порция на 45–60 минут: связки, ошибки, слабая тема, сочинение по расписанию.</p><button class="btn primary" data-go="plan">Открыть план</button></div>
     <div class="panel"><h3>Тренировка по типам</h3><p class="small muted">10 вопросов одного типа. Сразу видно ответ и объяснение по-русски.</p><button class="btn primary" data-go="practice">Начать</button></div>
     <div class="panel"><h3>Полный экзамен</h3><p class="small muted">2 раздела по 22 вопроса на время, лист ответов и сочинение. В конце оценка по шкале NITE.</p><button class="btn primary" data-go="sim">Сдать пробный</button></div>
     <div class="panel"><h3>Сочинение</h3><p class="small muted">15 минут, тема как на экзамене. Claude оценит по 4 критериям NITE и исправит ошибки.</p><button class="btn primary" data-go="essay">Написать</button></div>
@@ -563,6 +584,7 @@ function buildPractice(mode){
   if(mode==="rs") items=shuffle(allRS()).slice(0,10).map(q=>({type:"rs",q,qid:q.id}));
   if(mode==="rc"){const p=shuffle(allRC())[0]; items=p.qs.map((q,i)=>({type:"rc",q,p,i,qid:p.id+"-"+i}));}
   if(mode==="mix") items=shuffle(allSC()).slice(0,5).map(q=>({type:"sc",q,qid:q.id})).concat(shuffle(allRS()).slice(0,5).map(q=>({type:"rs",q,qid:q.id})));
+  if(mode.startsWith("tag:")){const tag=mode.slice(4); items=shuffle(allSC().map(q=>({type:"sc",q,qid:q.id})).concat(allRS().map(q=>({type:"rs",q,qid:q.id}))).filter(x=>x.q.t===tag)).slice(0,10);}
   if(mode==="mistakes"){
     const ids=Object.entries(S.stats).filter(([,s])=>!s.lastOk||s.wrong>s.ok).sort((a,b)=>b[1].wrong-a[1].wrong).map(([id])=>id);
     items=ids.map(id=>{const f=findQ(id);return f?Object.assign({qid:id},f):null;}).filter(Boolean).slice(0,12);
@@ -588,9 +610,10 @@ function renderPractice(){
   const it=P.items[P.idx];
   if(!it){ // итог
     const n=P.items.length, ok=P.items.filter(x=>P.answers[x.qid]===x.q.a).length;
+    if(!P.logged){P.logged=true; logAct(P.mode.startsWith("tag:")?"weak":P.mode);}
     view().innerHTML=`<h2>Итог: ${ok} из ${n}</h2><div class="panel"><div class="bar"><i style="width:${n?ok/n*100:0}%"></i></div>
     <p class="small muted" style="margin-top:10px">${ok/n>=.8?"Отлично. Попробуйте полный экзамен на время.":ok/n>=.5?"Неплохо. Ошибки попали в раздел «Мои ошибки».":"Ничего страшного: разберите объяснения и повторите ошибки через день."}</p>
-    <div class="row"><button class="btn primary" data-pmode="${P.mode}">Ещё блок</button><button class="btn" data-pback>Другой тип</button></div></div>`;
+    <div class="row">${P.fromPlan?`<button class="btn primary" data-go="plan">Вернуться к плану</button><button class="btn" data-pmode="${esc(P.mode)}">Ещё блок</button>`:`<button class="btn primary" data-pmode="${esc(P.mode)}">Ещё блок</button><button class="btn" data-pback>Другой тип</button>`}</div></div>`;
     return;
   }
   const ch=P.answers[it.qid]||0, rev=!!ch;
@@ -700,6 +723,7 @@ function finishSim(){
   }));
   res.mcUni=RAW2UNI[Math.min(44,res.raw)];
   X.result=res; X.stage=3;
+  logAct("sim");
   S.sims.push({ts:res.ts,raw:res.raw,mcUni:res.mcUni,byType:res.byType,essayText:X.essay?X.essay.slice(0,4000):"",topic:X.topic});
   persist(); renderSim();
 }
@@ -815,6 +839,7 @@ ${text.slice(0,6000)}`;
     ["content","organization","richness","accuracy"].forEach(k=>{r[k]=Math.max(1,Math.min(7,Math.round(+r[k]||1)));});
     ["fixes","upgrade_phrases","strengths_ru"].forEach(k=>{if(!Array.isArray(r[k]))r[k]=[];});
     outEl.innerHTML=gradeHTML(r); btn.disabled=false;
+    logAct("essay");
     S.essays.push({ts:Date.now(),topic,text:text.slice(0,4000),scores:{content:r.content,organization:r.organization,richness:r.richness,accuracy:r.accuracy}});
     persist(); return r;
   }catch(e){outEl.innerHTML=`<p class="note">${esc(sampleErr(e)||"Остановлено.")}</p>`;btn.disabled=false;return null;}
@@ -846,6 +871,144 @@ function renderCards(){
 }
 
 /* ============================================================
+   ПЛАН НА СЕГОДНЯ
+   Задания на каждый день недели. Отмечаются сами, когда вы их
+   выполняете в тренажёре, или вручную галочкой.
+   ============================================================ */
+function dkey(d){d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function logAct(k,n){const L=S.log[dkey()]=S.log[dkey()]||{};L[k]=(L[k]||0)+(n||1);persist();}
+function trimLog(){const keys=Object.keys(S.log).sort().slice(-150),o={};keys.forEach(k=>o[k]=S.log[k]);return o;}
+function dayStart(d){d=new Date(d);d.setHours(0,0,0,0);return d;}
+function planStart(){if(!S.plan.start){S.plan.start=dkey();persist();}const [y,m,d]=S.plan.start.split("-").map(Number);return new Date(y,m-1,d);}
+function planWeek(date){return Math.floor((dayStart(date)-planStart())/864e5/7)+1;}
+const WEEKENDS={fs:{name:"Пт–Сб (Израиль)",off:[5,6],work:[0,1,2,3,4]},ss:{name:"Сб–Вс",off:[6,0],work:[1,2,3,4,5]}};
+function phaseOf(w){return w<=5?{n:1,name:"Фундамент",goal:"выучить все связки и глаголы с предлогами; 70%+ в «Дополнении»"}:w<=9?{n:2,name:"Академический иврит",goal:"тексты потруднее, слабые темы, сочинения на 5 из 7"}:{n:3,name:"Экзаменационный режим",goal:"пробный экзамен каждую неделю; два подряд на нужный балл — регистрация"};}
+function weakTag(){
+  const tags={};
+  for(const [id,s] of Object.entries(S.stats)){const f=findQ(id);if(!f||f.type==="rc")continue;const t=f.q.t||"";if(!t)continue;tags[t]=tags[t]||[0,0];tags[t][0]+=s.ok;tags[t][1]+=s.n;}
+  const arr=Object.entries(tags).filter(([,v])=>v[1]>=3).sort((a,b)=>a[1][0]/a[1][1]-b[1][0]/b[1][1]);
+  return arr.length&&arr[0][1][0]/arr[0][1][1]<0.85?arr[0][0]:null;
+}
+function mistakesCount(){return Object.values(S.stats).filter(s=>!s.lastOk||s.wrong>s.ok).length;}
+function simThisWeek(date){const w=planWeek(date);return S.sims.some(s=>planWeek(new Date(s.ts))===w);}
+/* Задания на конкретную дату. */
+function tasksFor(date){
+  const wd=date.getDay(), W=WEEKENDS[S.plan.weekend]||WEEKENDS.fs, w=planWeek(date);
+  if(W.off.includes(wd)){
+    if(w>=6) return [{id:"sim",k:"sim",need:1,label:"Пробный экзамен на время",note:"2 раздела + сочинение, 55 минут. Один раз за неделю.",start:"sim",min:55,weekly:true}];
+    return [];
+  }
+  const i=W.work.indexOf(wd), weak=weakTag();
+  if(i===0) return [
+    {id:"cards",k:"cards",need:10,label:"10 карточек связок",note:"Сначала показываются те, что вы ещё не знаете.",start:"cards",min:10},
+    {id:"sc",k:"sc",need:1,label:"Блок «Дополнение предложений»",note:"10 вопросов: предлоги, биньяны, связки.",start:"sc",min:15},
+    weak?{id:"weak",k:"weak",need:1,label:"Слабая тема: "+weak,note:"Ваша самая низкая точность. 10 вопросов только по ней.",start:"tag:"+weak,min:15}
+        :{id:"sc2",k:"sc",need:2,label:"Ещё один блок «Дополнение»",note:"Когда наберётся статистика, здесь появится ваша слабая тема.",start:"sc",min:15}];
+  if(i===1) return [
+    {id:"rc",k:"rc",need:1,label:"Текст с вопросами",note:"Сначала читайте вопрос, потом ищите строку.",start:"rc",min:20},
+    {id:"words",manual:true,label:"Выписать 10 новых слов из текста",note:"В тетрадь или заметки: слово, перевод, пример.",min:15},
+    {id:"cards",k:"cards",need:10,label:"10 карточек связок",note:"Повторение.",start:"cards",min:10}];
+  if(i===2) return [
+    {id:"essay",k:"essay",need:1,label:"Сочинение на время",note:SAMPLE?"15 минут, затем проверка Claude и разбор исправлений.":"15 минут. Отметьте галочкой, когда напишете.",start:"essay",min:45,manualOk:!SAMPLE}];
+  if(i===3){
+    const m=mistakesCount();
+    return (m?[{id:"mistakes",k:"mistakes",need:1,label:"Мои ошибки ("+m+")",note:"Повторить вопросы, где вы ошиблись.",start:"mistakes",min:15}]:[])
+      .concat([{id:"rs",k:"rs",need:m?1:2,label:m?"Блок «Перефразирование»":"2 блока «Перефразирование»",note:"Ищите вариант с тем же смыслом: не больше и не меньше.",start:"rs",min:m?15:30}]);
+  }
+  if(i===4) return [{id:"reading",manual:true,label:"30 минут чтения на иврите",note:"Новости, статья или «שער למתחיל». Для удовольствия, без заданий.",min:30}];
+  return [];
+}
+function taskDone(t,date){
+  const L=S.log[dkey(date)]||{};
+  if((L.manual||{})[t.id]) return true;
+  if(t.weekly) return simThisWeek(date);
+  if(t.manual) return false;
+  return (L[t.k]||0)>=t.need;
+}
+function dayStatus(date){
+  const ts=tasksFor(date); if(!ts.length) return "rest";
+  const d=ts.filter(t=>taskDone(t,date)).length;
+  return d===ts.length?"done":d?"part":"none";
+}
+function streak(){
+  let n=0,d=dayStart(new Date());
+  if(dayStatus(d)!=="done") d=new Date(d-864e5);
+  for(let k=0;k<120;k++){
+    if(d<planStart()) break;
+    const st=dayStatus(d);
+    if(st==="done") n++; else if(st!=="rest") break;
+    d=new Date(d-864e5);
+  }
+  return n;
+}
+function readiness(){
+  const tgt=+S.plan.target, last=S.sims.slice(-2).map(s=>s.total||s.mcUni);
+  if(!tgt) return {state:"notarget",last};
+  if(last.length<2) return {state:"few",last,tgt};
+  return {state:last.every(x=>x>=tgt)?"ready":"notyet",last,tgt};
+}
+function startTask(start){
+  if(start==="cards"){C.order=null;C.i=0;C.flip=false;go("cards");return;}
+  if(start==="essay"||start==="sim"){go(start);return;}
+  P=buildPractice(start); P.fromPlan=true;
+  if(!P.items.length){P=null;toast("Здесь пока пусто.");return;}
+  go("practice");
+}
+function renderPlan(){
+  const now=new Date(), w=planWeek(now), ph=phaseOf(w), W=WEEKENDS[S.plan.weekend]||WEEKENDS.fs;
+  const tasks=tasksFor(now), done=tasks.filter(t=>taskDone(t,now)).length, mins=tasks.reduce((a,t)=>a+(t.min||0),0);
+  const r=readiness();
+  // неделя: 7 дней начиная с первого рабочего дня этой недели
+  const first=W.work[0]; let ws=dayStart(now); while(ws.getDay()!==first) ws=new Date(ws-864e5);
+  const days=[...Array(7)].map((_,k)=>new Date(ws.getTime()+k*864e5));
+  const DN=["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
+  const cal=days.map(d=>{const st=d>dayStart(now)?"future":dayStatus(d);const lbl={done:"выполнено",part:"частично",none:"пропущено",rest:"выходной",future:""}[st];
+    return `<div class="day ${st}${dkey(d)===dkey(now)?" today":""}" title="${lbl}"><span>${DN[d.getDay()]}</span><i></i><b class="num">${d.getDate()}</b></div>`;}).join("");
+  const rdy={notarget:`<p class="small">Укажите нужный балл ниже, и здесь появится ответ, пора ли записываться на экзамен.</p>`,
+    few:`<p class="small">Нужно ещё ${2-r.last.length} пробных экзамена(ов). ${w<6?"Они начнутся с 6-й недели, на выходных.":"Ближайший — на выходных."}</p>`,
+    ready:`<p><b>Пора регистрироваться.</b> Два последних пробных экзамена: ${r.last.join(" и ")} при цели ${r.tgt}. Запишитесь на ближайшую дату на сайте NITE.</p>`,
+    notyet:`<p class="small">Два последних пробных: ${(r.last||[]).join(" и ")}. Цель ${r.tgt}. Нужно, чтобы оба были не ниже цели.</p>`}[r.state];
+  view().innerHTML=`
+  <div class="row" style="justify-content:space-between;align-items:flex-end;margin-top:12px">
+    <div><div class="eyebrow">Неделя ${w} · этап ${ph.n} из 3</div><h2 style="margin:4px 0 0">${ph.name}</h2><div class="small muted">Цель этапа: ${ph.goal}</div></div>
+    <div class="kpi" style="min-width:130px"><span class="eyebrow">Серия</span><b>${streak()}</b><span class="small muted">дней по плану подряд</span></div>
+  </div>
+  <div class="week">${cal}</div>
+  <h2>Сегодня ${tasks.length?`<span class="small muted" style="font-weight:400">· ${done} из ${tasks.length} · около ${mins} мин</span>`:""}</h2>
+  ${tasks.length?`<div class="tasks">${tasks.map(t=>{const ok=taskDone(t,now);
+    const prog=!ok&&!t.manual&&!t.weekly&&t.need>1?` <span class="num small muted">${Math.min((S.log[dkey()]||{})[t.k]||0,t.need)}/${t.need}</span>`:"";
+    return `<div class="task ${ok?"ok":""}"><button class="check" data-tick="${t.id}" aria-pressed="${ok}" aria-label="${ok?"Снять отметку":"Отметить выполненным"}">${ok?"✓":""}</button>
+    <div class="tbody"><div class="tl">${esc(t.label)}${prog}</div><div class="small muted">${esc(t.note)} · ~${t.min} мин</div></div>
+    ${t.start&&!ok?`<button class="btn primary" data-start="${esc(t.start)}">Начать</button>`:""}</div>`;}).join("")}</div>
+    ${done===tasks.length?`<p class="note">Всё на сегодня сделано. Отдыхайте: память закрепляется между занятиями.</p>`:`<p class="note">Задания отмечаются сами, когда вы их выполняете. Если сделали что-то вне тренажёра, поставьте галочку вручную.</p>`}`
+  :`<div class="panel"><p style="margin:0"><b>Выходной.</b> ${w<6?"Пробные экзамены начнутся с 6-й недели.":simThisWeek(now)?"Пробный экзамен на этой неделе уже сдан.":""} Почитайте что-нибудь на иврите для удовольствия, если захочется.</p></div>`}
+  <h2>Пора ли на экзамен?</h2>
+  <div class="panel ${r.state==="ready"?"ready":""}">${rdy}<p class="small muted" style="margin:0">Правило: два пробных экзамена подряд на нужный балл → записывайтесь на ближайшую дату.</p></div>
+  <h2>Настройки</h2>
+  <div class="panel"><div class="grid2">
+    <label class="small">Нужный балл (50–150)<br><input type="text" inputmode="numeric" id="pl-target" value="${S.plan.target||""}" placeholder="например, 105" style="margin-top:6px;width:140px"></label>
+    <label class="small">Выходные<br><select id="pl-weekend" style="margin-top:6px">${Object.entries(WEEKENDS).map(([k,v])=>`<option value="${k}" ${k===S.plan.weekend?"selected":""}>${v.name}</option>`).join("")}</select></label>
+    <div class="small">План начат ${planStart().toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}<br><span id="pl-restart"><button class="btn ghost small" data-restart="ask" style="margin-top:6px">Начать заново с сегодня</button></span></div>
+  </div><p class="small muted" style="margin:10px 0 0">Нужный балл смотрите в требованиях вашего университета (דרישות קבלה, יע״ל).</p></div>`;
+}
+function planClick(t){
+  const tk=t.closest("[data-tick]");
+  if(tk){const d=dkey(),L=S.log[d]=S.log[d]||{},M=L.manual=L.manual||{},task=tasksFor(new Date()).find(x=>x.id===tk.dataset.tick);
+    if(task&&taskDone(task,new Date())&&!M[task.id]){toast("Это задание отмечено автоматически.");return true;}
+    M[tk.dataset.tick]=!M[tk.dataset.tick]; persist(); renderPlan(); return true;}
+  const rs=t.closest("[data-restart]");
+  if(rs){const box=document.getElementById("pl-restart");
+    if(rs.dataset.restart==="ask"){box.innerHTML=`Неделя снова станет первой. <button class="btn small" data-restart="yes">Да</button> <button class="btn ghost small" data-restart="no">Отмена</button>`;}
+    else{if(rs.dataset.restart==="yes"){S.plan.start=dkey();persist();toast("План начат заново");}renderPlan();}
+    return true;}
+  return false;
+}
+function planChange(e){
+  if(e.target.id==="pl-target"){const v=Math.round(+e.target.value);S.plan.target=v>=50&&v<=150?v:null;persist();renderPlan();}
+  if(e.target.id==="pl-weekend"){S.plan.weekend=e.target.value;persist();renderPlan();}
+}
+
+/* ============================================================
    ПРОГРЕСС
    ============================================================ */
 let resetAsk=false;
@@ -874,7 +1037,7 @@ function go(tab){
   TAB=tab;
   document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab));
   try{localStorage.setItem(LS+"-tab",tab);}catch(e){}
-  ({home:renderHome,practice:renderPractice,sim:renderSim,essay:renderEssay,cards:renderCards,stats:renderStats})[tab]();
+  ({home:renderHome,plan:renderPlan,practice:renderPractice,sim:renderSim,essay:renderEssay,cards:renderCards,stats:renderStats})[tab]();
   window.scrollTo({top:0});
 }
 document.getElementById("tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]");if(b)go(b.dataset.tab);});
@@ -886,6 +1049,9 @@ view().addEventListener("click",async e=>{
   const ai=t.closest("[data-ai-explain]");
   if(ai){const id=ai.closest(".q").dataset.qid, f=CUR[id]||findQ(id); if(f) aiExplain(ai,f); return;}
   // тренировка
+  const st=t.closest("[data-start]");
+  if(st){startTask(st.dataset.start);return;}
+  if(TAB==="plan"&&planClick(t)) return;
   if(TAB==="practice"){
     const m=t.closest("[data-pmode]"); if(m){P=buildPractice(m.dataset.pmode); if(!P.items.length){P=null;toast("Здесь пока пусто.");} renderPractice(); return;}
     if(t.closest("[data-pback]")){P=null;renderPractice();return;}
@@ -933,7 +1099,7 @@ view().addEventListener("click",async e=>{
   if(TAB==="cards"){
     if(t.closest("[data-flip]")){C.flip=!C.flip;renderCards();return;}
     const c=t.closest("[data-card]");
-    if(c){const l=LINKS[C.order[C.i%C.order.length]];const st=S.cards[l[0]]||{n:0};st.n++;st.known=c.dataset.card==="know";S.cards[l[0]]=st;persist();C.i++;C.flip=false;if(C.i>=C.order.length){C.order=cardDeck();C.i=0;}renderCards();return;}
+    if(c){const l=LINKS[C.order[C.i%C.order.length]];const st=S.cards[l[0]]||{n:0};st.n++;st.known=c.dataset.card==="know";S.cards[l[0]]=st;logAct("cards");C.i++;C.flip=false;if(C.i>=C.order.length){C.order=cardDeck();C.i=0;}renderCards();return;}
   }
   // прогресс
   if(TAB==="stats"){
@@ -942,6 +1108,7 @@ view().addEventListener("click",async e=>{
   }
 });
 view().addEventListener("keydown",e=>{if(TAB==="cards"&&e.target.closest("[data-flip]")&&(e.key==="Enter"||e.key===" ")){e.preventDefault();C.flip=!C.flip;renderCards();document.querySelector("[data-flip]").focus();}});
+view().addEventListener("change",e=>{if(TAB==="plan")planChange(e);});
 view().addEventListener("change",e=>{if(e.target.id==="cg"){C.group=e.target.value;C.order=null;C.i=0;C.flip=false;renderCards();}});
 function saveDraft(){try{localStorage.setItem(LS+"-draft",JSON.stringify({topic:E.topic,text:E.text}));}catch(e){}}
 view().addEventListener("input",e=>{
@@ -952,8 +1119,8 @@ view().addEventListener("input",e=>{
 /* ============================================================
    ЗАПУСК
    ============================================================ */
-let startTab="home"; try{startTab=localStorage.getItem(LS+"-tab")||"home";}catch(e){}
-if(!["home","practice","sim","essay","cards","stats"].includes(startTab)) startTab="home";
+let startTab="plan"; try{startTab=localStorage.getItem(LS+"-tab")||"plan";}catch(e){}
+if(!["home","plan","practice","sim","essay","cards","stats"].includes(startTab)) startTab="plan";
 go(startTab);
 
 (async()=>{
@@ -966,7 +1133,7 @@ go(startTab);
       if(UID){
         DB=db; const base="data/users/"+UID+"/";
         const [p,es,gn]=await Promise.all([db.doc(base+"progress").get(),db.doc(base+"essays").get(),db.doc(base+"generated").get()]);
-        if(p.exists){const d=p.data();S.stats=d.stats||{};S.sims=d.sims||[];S.cards=d.cards||{};}
+        if(p.exists){const d=p.data();S.stats=d.stats||{};S.sims=d.sims||[];S.cards=d.cards||{};if(d.plan)S.plan=Object.assign(S.plan,d.plan);if(d.log)S.log=d.log;}
         if(es.exists) S.essays=(es.data().list)||[];
         if(gn.exists){const d=gn.data();S.gen={sc:d.sc||[],rs:d.rs||[],rc:d.rc||[]};}
         if(!p.exists&&Object.keys(S.stats).length) persist(); // перенести локальный прогресс в аккаунт
