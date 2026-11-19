@@ -1,0 +1,501 @@
+<title>Словарь из текстов</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700&family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a reading desk. The text sits on the right like a page, word cards are index cards with the root stamped in drop-out pink. */
+:root{
+  --paper:#F2F4F6; --sheet:#FFFFFF; --ink:#1D232B; --muted:#5E6875; --line:#D9DEE4;
+  --accent:#1F5E8C; --accent-soft:#E3EDF6; --drop:#D46A8C; --drop-soft:#FBEAF0;
+  --ok:#2F7D4F; --ok-soft:#E3F3E8; --bad:#B42318; --bad-soft:#FBE7E5; --mark:#FFF1B8;
+  --f-he:"Frank Ruhl Libre","David Libre","Times New Roman",serif;
+  --f-ui:"Rubik",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#13161A; --sheet:#1B1F25; --ink:#E5E8EC; --muted:#9AA4AF; --line:#2E343C;
+  --accent:#7CB2E0; --accent-soft:#1E2E3D; --drop:#E48FAA; --drop-soft:#3A2230;
+  --ok:#62C48D; --ok-soft:#18301F; --bad:#F2837A; --bad-soft:#3A1D1A; --mark:#4A4020; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#13161A; --sheet:#1B1F25; --ink:#E5E8EC; --muted:#9AA4AF; --line:#2E343C;
+  --accent:#7CB2E0; --accent-soft:#1E2E3D; --drop:#E48FAA; --drop-soft:#3A2230;
+  --ok:#62C48D; --ok-soft:#18301F; --bad:#F2837A; --bad-soft:#3A1D1A; --mark:#4A4020; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.55 var(--f-ui);padding-inline:16px;padding-block:0 48px}
+.wrap{max-width:980px;margin:0 auto}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;padding-block:22px 14px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand h1{margin:0;font:700 32px/1 var(--f-he)}
+.brand span{color:var(--muted);font-size:14px}
+.sync{font-size:12px;color:var(--muted)}
+nav.tabs{display:flex;gap:4px;flex-wrap:wrap;padding-block:12px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--paper);z-index:5}
+nav.tabs button{font:500 14px var(--f-ui);border:1px solid transparent;background:none;color:var(--muted);padding:7px 12px;border-radius:999px;cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+nav.tabs button:hover:not([aria-selected="true"]){border-color:var(--line);color:var(--ink)}
+.badge{display:inline-block;min-width:20px;padding:0 6px;margin-inline-start:4px;border-radius:999px;background:var(--drop);color:var(--sheet);font:600 11px/18px var(--f-num);text-align:center}
+button,select,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:var(--accent);text-underline-offset:3px}
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--sheet);padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:500}
+.btn:hover{border-color:var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--sheet)}
+.btn.ghost{background:none}
+.btn.small{padding:5px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.panel{background:var(--sheet);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+h2{font:600 20px/1.3 var(--f-ui);margin:20px 0 10px;text-wrap:balance}
+h3{font:600 16px/1.3 var(--f-ui);margin:0 0 8px}
+p{margin:0 0 10px;max-width:68ch}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)} .small{font-size:13px}
+.he{font-family:var(--f-he);direction:rtl;text-align:right;unicode-bidi:isolate}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.note{font-size:13px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px;margin:10px 0;max-width:70ch}
+.chip{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:500;white-space:nowrap}
+.chip.drop{background:var(--drop-soft);color:var(--drop)}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+textarea.src{width:100%;min-height:180px;resize:vertical;padding:14px 16px;border:1px solid var(--line);border-radius:var(--r);background:var(--sheet);font:400 19px/1.8 var(--f-he);direction:rtl}
+input[type="text"],input[type="search"],select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--sheet)}
+/* analysis */
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:760px){.two{grid-template-columns:minmax(0,1fr)}}
+.orig{font:400 20px/2 var(--f-he);direction:rtl;text-align:right}
+.orig mark{background:var(--mark);color:inherit;border-bottom:2px solid var(--drop);padding:0 1px;cursor:pointer;border-radius:2px}
+.sent{display:grid;gap:4px;padding:10px 0;border-bottom:1px solid var(--line)}
+.sent:last-child{border-bottom:0}
+.sent .he{font-size:18px;line-height:1.7}
+.sent .ru{font-size:14.5px;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.wcard{background:var(--sheet);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:8px;align-content:start;min-width:0}
+.wcard.picked{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.wcard.flash{animation:flash 1.2s ease-out}
+@keyframes flash{from{background:var(--mark)}to{background:var(--sheet)}}
+.wtop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.word{font:700 26px/1.2 var(--f-he);direction:rtl}
+.root{font:600 13px var(--f-he);color:var(--drop);border:1.5px solid var(--drop);border-radius:6px;padding:1px 7px;direction:rtl;white-space:nowrap}
+.ru{font-weight:500}
+.phrase{padding:8px 10px;border-radius:8px;background:var(--paper)}
+.phrase .he{font-size:18px;line-height:1.6}
+.fam{display:flex;flex-wrap:wrap;gap:6px;direction:rtl}
+.fam span{font-size:13px;padding:2px 8px;border:1px solid var(--line);border-radius:999px}
+.fam b{font:500 15px var(--f-he)}
+.tip{font-size:13px;color:var(--muted)}
+.pick{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
+.pick input{width:18px;height:18px;accent-color:var(--accent)}
+.stars{color:var(--drop);font-size:12px;letter-spacing:1px}
+/* review */
+.flashcard{min-height:280px;display:grid;place-items:center;text-align:center;padding:26px 18px}
+.flashcard .q{font:500 28px/1.6 var(--f-he);direction:rtl}
+.flashcard .q b{background:var(--mark);border-bottom:2px solid var(--drop);font-weight:700}
+.flashcard .qru{font-size:22px;font-weight:500}
+.ans{display:grid;gap:10px;margin-top:16px;text-align:center}
+.ans .big{font:700 30px var(--f-he);direction:rtl}
+.grades{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.grades .btn{justify-content:center;flex-direction:column;gap:2px}
+.grades .btn small{font-weight:400;color:var(--muted);font-size:11px}
+.btn.g0{border-color:var(--bad)} .btn.g2{border-color:var(--ok)}
+.pips{display:inline-flex;gap:2px}
+.pips i{width:7px;height:7px;border-radius:50%;border:1px solid var(--drop)}
+.pips i.on{background:var(--drop)}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{padding:14px;border:1px solid var(--line);border-radius:var(--r);background:var(--sheet)}
+.kpi b{display:block;font:700 26px var(--f-num)}
+/* dictionary list */
+.tablebox{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+td.he{font-size:19px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:8px;font-size:14px;z-index:20;max-width:calc(100% - 32px)}
+.thumb{max-height:120px;border-radius:8px;border:1px solid var(--line)}
+@media (prefers-reduced-motion:reduce){.wcard.flash{animation:none}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><h1 class="he">מילים</h1><span>словарь из твоих текстов · к тесту יע״ל</span></div>
+    <div class="sync" id="sync">Сохраняю в этом браузере</div>
+  </header>
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="parse">Разобрать текст</button>
+    <button role="tab" data-tab="review">Повторить<span class="badge" id="due-badge" hidden></span></button>
+    <button role="tab" data-tab="dict">Мой словарь</button>
+    <button role="tab" data-tab="texts">Мои тексты</button>
+  </nav>
+  <main id="view"></main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ============================================================
+   ПРИМЕР РАЗБОРА. Показывается, пока вы не разобрали свой первый
+   текст: так видно, что получится. Подготовлен вручную.
+   ============================================================ */
+const EXAMPLE={id:"example",example:true,ts:0,title:"שינה וזיכרון",
+ text:"מחקרים רבים מראים כי לשינה יש תפקיד חשוב בתהליכי הלמידה והזיכרון. בעבר רווחה הדעה שבזמן השינה המוח נח, כלומר פעילותו כמעט נפסקת.",
+ sentences:[
+  {he:"מחקרים רבים מראים כי לשינה יש תפקיד חשוב בתהליכי הלמידה והזיכרון.",ru:"Многие исследования показывают, что сон играет важную роль в процессах обучения и памяти."},
+  {he:"בעבר רווחה הדעה שבזמן השינה המוח נח, כלומר פעילותו כמעט נפסקת.",ru:"Раньше было распространено мнение, что во время сна мозг отдыхает, то есть его активность почти прекращается."}],
+ words:[
+  {he:"מֶחְקָר",in_text:"מחקרים",root:"ח־ק־ר",pos:"сущ., м. р.",ru:"исследование",phrase_he:"עָרְכוּ מֶחְקָר עַל שֵׁינָה",phrase_ru:"провели исследование о сне",example_he:"הַמֶּחְקָר מַרְאֶה שֶׁשֵּׁינָה חֲשׁוּבָה לַזִּכָּרוֹן.",example_ru:"Исследование показывает, что сон важен для памяти.",family:[{he:"חוֹקֵר",ru:"исследователь"},{he:"לַחְקוֹר",ru:"исследовать"},{he:"חֲקִירָה",ru:"расследование"}],tip_ru:"Не путать: מֶחְקָר — научное исследование, חֲקִירָה — полицейское расследование.",yael:3},
+  {he:"מַרְאֶה",in_text:"מראים",root:"ר־א־ה",pos:"глагол, הפעיל",ru:"показывать",phrase_he:"הַנְּתוּנִים מַרְאִים כִּי…",phrase_ru:"данные показывают, что…",example_he:"הַמַּחְקָרִים מַרְאִים כִּי הַמַּצָּב מִשְׁתַּפֵּר.",example_ru:"Исследования показывают, что ситуация улучшается.",family:[{he:"לִרְאוֹת",ru:"видеть"},{he:"הֶרְאָה",ru:"показал"},{he:"נִרְאֶה",ru:"кажется, выглядит"}],tip_ru:"Биньян הפעיל часто значит «заставить сделать»: видеть → заставить видеть = показывать.",yael:3},
+  {he:"תַּפְקִיד",in_text:"תפקיד",root:"פ־ק־ד",pos:"сущ., м. р.",ru:"роль; должность",phrase_he:"יֵשׁ לְ… תַּפְקִיד חָשׁוּב בְּ…",phrase_ru:"… играет важную роль в …",example_he:"לַמּוֹרֶה יֵשׁ תַּפְקִיד חָשׁוּב בְּחַיֵּי הַתַּלְמִידִים.",example_ru:"Учитель играет важную роль в жизни учеников.",family:[{he:"פָּקִיד",ru:"служащий"},{he:"תִּפְקוּד",ru:"функционирование"}],tip_ru:"Конструкция целиком: יש ל-X תפקיד ב-Y. Пригодится в сочинении.",yael:3},
+  {he:"תַּהֲלִיךְ",in_text:"בתהליכי",root:"ה־ל־ך",pos:"сущ., м. р.",ru:"процесс",phrase_he:"בְּתַהֲלִיךְ הַלְּמִידָה",phrase_ru:"в процессе обучения",example_he:"זֶה תַּהֲלִיךְ אָרוֹךְ וְקָשֶׁה.",example_ru:"Это долгий и трудный процесс.",family:[{he:"הָלַךְ",ru:"шёл"},{he:"מַהֲלָךְ",ru:"ход, шаг"},{he:"הֲלִיכָה",ru:"ходьба"}],tip_ru:"В тексте בתהליכי = ב (в) + תהליכי (смихут мн. ч.: «процессы чего-то»).",yael:3},
+  {he:"זִכָּרוֹן",in_text:"והזיכרון",root:"ז־כ־ר",pos:"сущ., м. р.",ru:"память",phrase_he:"זִכָּרוֹן לְטוֹוַח אָרוֹךְ",phrase_ru:"долговременная память",example_he:"יֵשׁ לוֹ זִכָּרוֹן טוֹב לְשֵׁמוֹת.",example_ru:"У него хорошая память на имена.",family:[{he:"זָכַר",ru:"помнил"},{he:"נִזְכַּר",ru:"вспомнил"},{he:"הִזְכִּיר",ru:"напомнил, упомянул"}],tip_ru:"והזיכרון = ו (и) + ה (артикль) + זיכרון. Сначала снимайте приставки.",yael:2},
+  {he:"רָוַח",in_text:"רווחה",root:"ר־ו־ח",pos:"глагол, פעל",ru:"был распространён",phrase_he:"רָוְחָה הַדֵּעָה שֶׁ…",phrase_ru:"бытовало мнение, что…",example_he:"בֶּעָבָר רָוְחָה הַדֵּעָה שֶׁהָאֲדָמָה שְׁטוּחָה.",example_ru:"Раньше бытовало мнение, что Земля плоская.",family:[{he:"נָפוֹץ",ru:"распространённый (синоним)"},{he:"רֶוַח",ru:"прибыль"}],tip_ru:"Книжное слово, типичное для текстов YAEL. Учите всю фразу רווחה הדעה ש-.",yael:3},
+  {he:"כְּלוֹמַר",in_text:"כלומר",root:"",pos:"связка",ru:"то есть",phrase_he:"…, כְּלוֹמַר …",phrase_ru:"…, то есть …",example_he:"הוּא דּוּ־לְשׁוֹנִי, כְּלוֹמַר מְדַבֵּר שְׁתֵּי שָׂפוֹת.",example_ru:"Он двуязычный, то есть говорит на двух языках.",family:[{he:"דְּהַיְינוּ",ru:"то есть (книжн.)"}],tip_ru:"На экзамене כלומר подсказывает: дальше идёт пересказ сказанного другими словами.",yael:3},
+  {he:"נִפְסַק",in_text:"נפסקת",root:"פ־ס־ק",pos:"глагол, נפעל",ru:"прекратился",phrase_he:"הַגֶּשֶׁם נִפְסַק",phrase_ru:"дождь прекратился",example_he:"הַפְּעִילוּת נִפְסְקָה בִּגְלַל הַמִּלְחָמָה.",example_ru:"Деятельность прекратилась из-за войны.",family:[{he:"הִפְסִיק",ru:"прекратил (что-то)"},{he:"הַפְסָקָה",ru:"перерыв"},{he:"פִּסְקָה",ru:"абзац"}],tip_ru:"נפעל = само прекратилось; הפעיל הפסיק = кто-то прекратил. В тексте נפסקת — настоящее время, ж. р.",yael:2}],
+ grammar:[
+  {title_ru:"Приставки מש״ה וכל״ב",explain_ru:"7 букв прилипают к началу слова: מ (из), ש (что), ה (артикль), ו (и), כ (как), ל (к, для), ב (в). Длинное незнакомое слово сначала «раздевайте».",example_he:"בתהליכי = ב + תהליכי · והזיכרון = ו + ה + זיכרון · שבזמן = ש + ב + זמן"},
+  {title_ru:"כי после глаголов речи = «что»",explain_ru:"После מראים, אמר, טען, הודיע слово כי значит «что», а не «потому что».",example_he:"מחקרים מראים כי…"}]};
+
+/* ============================================================
+   СОСТОЯНИЕ И ХРАНЕНИЕ
+   Карточка: {id, kind:"card", he, root, pos, ru, phrase_he, phrase_ru,
+   example_he, example_ru, family[], tip_ru, yael, src, box, due, seen, ok, ts}
+   ============================================================ */
+const LS="yael-words-v1";
+const INTERVALS=[0,1,3,7,14,30,60];              // дни для коробок 0..6
+let CARDS={}, TEXTS={}, CUR=null, DB=null, UID=null, SAMPLE=null, CAN_IMG=false;
+try{const d=JSON.parse(localStorage.getItem(LS)||"null");if(d){CARDS=d.cards||{};TEXTS=d.texts||{};}}catch(e){}
+function saveLocal(){try{localStorage.setItem(LS,JSON.stringify({cards:CARDS,texts:TEXTS}));}catch(e){}}
+async function putDoc(id,obj){saveLocal();if(DB&&UID){try{await DB.doc("data/users/"+UID+"/"+id).set(obj);setSync("Сохранено в вашем аккаунте Claude");}catch(e){setSync("Не удалось сохранить в аккаунт, данные в этом браузере");}}}
+async function delDoc(id){saveLocal();if(DB&&UID){try{await DB.doc("data/users/"+UID+"/"+id).delete();}catch(e){}}}
+function setSync(t){document.getElementById("sync").textContent=t;}
+
+/* ============================================================
+   УТИЛИТЫ
+   ============================================================ */
+const $=s=>document.querySelector(s);
+const view=()=>document.getElementById("view");
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function uid(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2600);}
+const NIKUD=/[֑-ׇ]/g;
+function plain(s){return String(s||"").replace(NIKUD,"").replace(/[״"׳']/g,"").trim();}
+function dayEnd(){const d=new Date();d.setHours(23,59,59,999);return d.getTime();}
+function isDue(c){return (c.due||0)<=dayEnd();}
+function dueCards(){return Object.values(CARDS).filter(isDue);}
+function newToday(){const s=new Date();s.setHours(0,0,0,0);return Object.values(CARDS).filter(c=>c.firstSeen&&c.firstSeen>=s.getTime()).length;}
+function pips(box){return `<span class="pips" title="Коробка ${box} из 6">${[1,2,3,4,5,6].map(i=>`<i class="${i<=box?"on":""}"></i>`).join("")}</span>`;}
+function updateBadge(){const n=dueCards().length,b=document.getElementById("due-badge");b.textContent=n;b.hidden=!n;}
+function sampleErr(e){
+  const c=e&&e.code;
+  if(["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(c)){SAMPLE=null;return "Claude недоступен на этой странице. Разбор текстов работает, только когда страница открыта в Claude.";}
+  if(c==="rate_limited") return "Слишком много запросов. Подождите минуту и нажмите ещё раз.";
+  if(c==="invalid_json") return "Claude ответил в неожиданном формате. Нажмите ещё раз.";
+  if(c==="prompt_too_large") return "Текст слишком длинный. Разберите его по частям, до 1500 знаков за раз.";
+  if(c==="image_rejected") return "Это фото не подходит. Попробуйте другое: JPG или PNG, текст крупно и чётко.";
+  if(c==="refused") return "Claude отказался разбирать этот текст.";
+  if(c==="cancelled") return "";
+  return "Связь с Claude прервалась. Попробуйте ещё раз.";
+}
+
+/* ============================================================
+   РАЗБОР ТЕКСТА
+   ============================================================ */
+let IMG=null, busy=null;
+const PROMPT=`Ты преподаёшь иврит русскоязычной студентке уровня бет–гимель. Она готовится к тесту יע״ל и потом будет учиться на медсестру. Разбери текст на иврите ниже${"{IMG}"}.
+
+Задачи:
+1. Разбей текст на предложения и дай к каждому перевод на русский (естественный, не дословный).
+2. Выбери 8–20 слов и выражений, которые стоит выучить. Пропускай самые простые слова уровня алеф (בית, הוא, גדול…), если они не входят в устойчивое выражение. Предпочитай: академические и книжные слова, связки, глаголы с управлением, новостную и медицинскую лексику, идиомы.
+3. Для каждого слова дай карточку для изучения ФРАЗАМИ: короткое живое словосочетание (коллокацию), в котором это слово обычно встречается, и отдельный пример-предложение.
+4. Добавь 1–3 грамматические заметки именно по этому тексту (приставки, смихут, биньян, управление).
+
+Правила:
+- he: словарная форма с огласовками (глагол — прошедшее время, 3 л. м. р.; существительное — ед. ч.).
+- in_text: слово ТОЧНО так, как оно написано в тексте, со всеми приставками, без огласовок (чтобы его можно было найти поиском в тексте).
+- root: корень через ־, например "ת־ק־ף"; пустая строка, если корня нет.
+- phrase_he, example_he: с огласовками. family: 2–3 однокоренных слова с огласовками.
+- tip_ru: одна полезная подсказка: как снять приставки, ловушка, похожее слово, чем полезно на YAEL.
+- yael: насколько слово полезно для теста יע״ל, 1–3.
+- title: короткое название текста на иврите (2–4 слова).
+
+Ответь только JSON такого вида:
+{"title":"…","sentences":[{"he":"…","ru":"…"}],"words":[{"he":"…","in_text":"…","root":"…","pos":"глагол, הפעיל","ru":"…","phrase_he":"…","phrase_ru":"…","example_he":"…","example_ru":"…","family":[{"he":"…","ru":"…"}],"tip_ru":"…","yael":3}],"grammar":[{"title_ru":"…","explain_ru":"…","example_he":"…"}]}
+
+Текст:
+`;
+function renderParse(){
+  const show=CUR||(!Object.keys(TEXTS).length?EXAMPLE:null);
+  view().innerHTML=`
+  <h2>Вставь текст на иврите</h2>
+  <div class="panel">
+    <textarea class="src" id="src" dir="rtl" lang="he" placeholder="הדביקו כאן טקסט: חדשות, מאמר, קטע מבחינה…"></textarea>
+    <div class="row" style="justify-content:space-between;margin-top:10px">
+      <div class="row">
+        ${CAN_IMG?`<label class="btn ghost" for="img">Фото текста</label><input type="file" id="img" accept="image/*" hidden>`:""}
+        <span id="imgbox" class="small muted"></span>
+      </div>
+      <div class="row"><span class="small muted" id="len">0 / 1500</span>
+      ${SAMPLE?`<button class="btn primary" id="go">Разобрать</button>`:`<span class="small muted">Разбор работает, когда страница открыта в Claude.</span>`}</div>
+    </div>
+    <div id="status" class="small muted" style="margin-top:8px"></div>
+  </div>
+  <div id="result">${show?analysisHTML(show):""}</div>`;
+}
+function analysisHTML(a){
+  const inDeck=new Set(Object.values(CARDS).map(c=>plain(c.he)+"|"+c.ru));
+  let text=esc(a.text||"");
+  // подсветить слова в тексте: длинные сначала, чтобы не ломать вложенные совпадения
+  const ws=(a.words||[]).map((w,i)=>({w,i})).filter(x=>x.w.in_text).sort((x,y)=>y.w.in_text.length-x.w.in_text.length);
+  const marks=[];
+  ws.forEach(({w,i})=>{const t=esc(plain(w.in_text)); if(!t) return; const k="\u0001"+marks.length+"\u0002"; if(text.includes(t)){text=text.replace(t,k);marks.push(`<mark data-jump="${i}">${t}</mark>`);}});
+  marks.forEach((m,n)=>{text=text.replace("\u0001"+n+"\u0002",m);});
+  const words=(a.words||[]).map((w,i)=>{
+    const has=inDeck.has(plain(w.he)+"|"+w.ru);
+    return `<div class="wcard ${has?"":"picked"}" id="w${i}">
+      <div class="wtop"><div><div class="word">${esc(w.he)}</div><div class="ru">${esc(w.ru)}</div><div class="small muted">${esc(w.pos||"")}</div></div>
+      <div style="display:grid;gap:6px;justify-items:end">${w.root?`<span class="root">${esc(w.root)}</span>`:""}<span class="stars" title="Полезность для YAEL">${"★".repeat(+w.yael||1)}${"☆".repeat(3-(+w.yael||1))}</span></div></div>
+      ${w.phrase_he?`<div class="phrase"><div class="eyebrow">Учите фразой</div><div class="he">${esc(w.phrase_he)}</div><div class="small">${esc(w.phrase_ru)}</div></div>`:""}
+      ${w.example_he?`<div><div class="he" style="font-size:17px">${esc(w.example_he)}</div><div class="small muted">${esc(w.example_ru)}</div></div>`:""}
+      ${(w.family||[]).length?`<div class="fam">${w.family.map(f=>`<span><b>${esc(f.he)}</b> ${esc(f.ru)}</span>`).join("")}</div>`:""}
+      ${w.tip_ru?`<div class="tip">${esc(w.tip_ru)}</div>`:""}
+      ${has?`<span class="chip ok">уже в словаре</span>`:`<label class="pick"><input type="checkbox" data-pick="${i}" checked> добавить в карточки</label>`}
+    </div>`;}).join("");
+  const pickable=(a.words||[]).filter(w=>!inDeck.has(plain(w.he)+"|"+w.ru)).length;
+  return `
+  <div class="row" style="justify-content:space-between;margin-top:22px">
+    <div><div class="eyebrow">${a.example?"Пример разбора":"Разбор"}${a.ts?" · "+new Date(a.ts).toLocaleDateString("ru-RU",{day:"numeric",month:"short"}):""}</div><h2 style="margin:4px 0 0" class="he">${esc(a.title||"")}</h2></div>
+    ${a.example?`<span class="chip drop">пример: так будет выглядеть ваш текст</span>`:""}
+  </div>
+  <div class="two" style="margin-top:12px">
+    <div class="panel"><div class="eyebrow" style="margin-bottom:6px">Текст · нажмите на выделенное слово</div><div class="orig">${text}</div></div>
+    <div class="panel"><div class="eyebrow">Перевод по предложениям</div>${(a.sentences||[]).map(s=>`<div class="sent"><div class="he">${esc(s.he)}</div><div class="ru">${esc(s.ru)}</div></div>`).join("")}</div>
+  </div>
+  ${(a.grammar||[]).length?`<h2>Грамматика из этого текста</h2><div class="cards">${a.grammar.map(g=>`<div class="wcard"><h3>${esc(g.title_ru)}</h3><p class="small" style="margin:0">${esc(g.explain_ru)}</p>${g.example_he?`<div class="phrase"><div class="he">${esc(g.example_he)}</div></div>`:""}</div>`).join("")}</div>`:""}
+  <div class="row" style="justify-content:space-between;margin-top:20px"><h2 style="margin:0">Слова (${(a.words||[]).length})</h2>
+    ${pickable?`<button class="btn primary" data-add="${esc(a.id)}">Добавить выбранные в карточки</button>`:`<span class="chip ok">все слова уже в словаре</span>`}</div>
+  <div class="cards" style="margin-top:12px">${words}</div>
+  <details class="panel" style="margin-top:16px"><summary><b>Как учить слова из текста</b></summary>
+    <p style="margin-top:10px"><b>Фразой, а не словом.</b> «תַּפְקִיד» забудется, а «יש ל… תפקיד חשוב ב…» запомнится, и её можно сразу вставить в сочинение.</p>
+    <p><b>Через корень.</b> Корень в розовой рамке. Знаете корень — угадаете на экзамене незнакомое слово из той же семьи.</p>
+    <p><b>Сначала узнавать, потом вспоминать.</b> Первые повторы: иврит → русский. После трёх удачных карточка переворачивается: русский → иврит.</p>
+    <p><b>Повторять с перерывами:</b> через 1, 3, 7, 14, 30 дней. Вкладка «Повторить» сама показывает, что пора.</p>
+    <p style="margin:0"><b>10–15 новых слов в день.</b> Больше не удержится, а с повторами это около 1000 слов за 3 месяца.</p>
+  </details>`;
+}
+async function parse(){
+  const src=$("#src").value.trim();
+  if(!src&&!IMG){toast("Вставьте текст или выберите фото.");return;}
+  if(src.length>1500){toast("Слишком длинно. До 1500 знаков за раз.");return;}
+  const btn=$("#go"),st=$("#status");
+  btn.disabled=true; st.textContent="Claude разбирает текст… обычно 20–60 секунд."; busy=new AbortController();
+  const prompt=PROMPT.replace("{IMG}",IMG?" (текст на приложенном фото; сначала перепиши его в поле text)":"")+(src||"(текст на фото)")+(IMG?'\n\nДобавь в JSON поле "text" — текст с фото, как он написан.':"");
+  try{
+    const opts={cache:false,signal:busy.signal}; if(IMG) opts.images=IMG;
+    const r=await SAMPLE.json(prompt,opts);
+    if(!r||!Array.isArray(r.words)) throw {code:"invalid_json"};
+    const a={id:uid("t_"),kind:"text",ts:Date.now(),title:String(r.title||"טקסט"),text:String(src||r.text||"").slice(0,3000),
+      sentences:(Array.isArray(r.sentences)?r.sentences:[]).map(s=>({he:String(s.he||""),ru:String(s.ru||"")})),
+      words:r.words.filter(w=>w&&w.he&&w.ru).slice(0,25).map(w=>({he:String(w.he),in_text:String(w.in_text||""),root:String(w.root||""),pos:String(w.pos||""),ru:String(w.ru),
+        phrase_he:String(w.phrase_he||""),phrase_ru:String(w.phrase_ru||""),example_he:String(w.example_he||""),example_ru:String(w.example_ru||""),
+        family:(Array.isArray(w.family)?w.family:[]).slice(0,4).map(f=>({he:String(f.he||""),ru:String(f.ru||"")})),tip_ru:String(w.tip_ru||""),yael:Math.max(1,Math.min(3,Math.round(+w.yael||2)))})),
+      grammar:(Array.isArray(r.grammar)?r.grammar:[]).slice(0,4).map(g=>({title_ru:String(g.title_ru||""),explain_ru:String(g.explain_ru||""),example_he:String(g.example_he||"")}))};
+    TEXTS[a.id]=a; CUR=a; putDoc(a.id,a); IMG=null;
+    renderParse(); document.getElementById("result").scrollIntoView({behavior:"smooth"});
+  }catch(e){st.textContent=sampleErr(e)||"Остановлено.";btn.disabled=false;}
+}
+function addPicked(id){
+  const a=id==="example"?EXAMPLE:TEXTS[id]; if(!a) return;
+  const picked=[...document.querySelectorAll("[data-pick]")].filter(x=>x.checked).map(x=>a.words[+x.dataset.pick]);
+  if(!picked.length){toast("Отметьте хотя бы одно слово.");return;}
+  picked.forEach(w=>{const c=Object.assign({},w,{id:uid("c_"),kind:"card",src:a.id,srcTitle:a.title,box:0,due:Date.now(),seen:0,ok:0,ts:Date.now()});delete c.in_text;CARDS[c.id]=c;putDoc(c.id,c);});
+  updateBadge(); toast("Добавлено карточек: "+picked.length); renderParse();
+}
+
+/* ============================================================
+   ПОВТОРЕНИЕ (карточки с интервалами, система Лейтнера)
+   ============================================================ */
+let R=null;
+function startReview(){
+  const due=dueCards().sort((a,b)=>(a.box-b.box)||(a.due-b.due));
+  const fresh=due.filter(c=>!c.seen), old=due.filter(c=>c.seen);
+  const room=Math.max(0,15-newToday());                 // не больше 15 новых в день
+  R={queue:old.concat(fresh.slice(0,room)).slice(0,40),i:0,flip:false,done:0,good:0,again:[]};
+}
+function highlight(phrase,word){
+  const p=esc(phrase), w=esc(plain(word));
+  const re=new RegExp("(\\S*"+w.split("").map(ch=>ch.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"[\\u0591-\\u05C7]*").join("")+"\\S*)");
+  return re.test(p)?p.replace(re,"<b>$1</b>"):p+`<div style="margin-top:8px"><b>${esc(word)}</b></div>`;
+}
+function renderReview(){
+  if(!R) startReview();
+  const total=Object.keys(CARDS).length;
+  if(!total){view().innerHTML=`<h2>Повторение</h2><div class="panel"><p>Карточек пока нет. Разберите текст во вкладке «Разобрать текст» и добавьте слова, они появятся здесь.</p><button class="btn primary" data-tab-go="parse">Разобрать текст</button></div>`;return;}
+  const c=R.queue[R.i];
+  if(!c){
+    const next=Object.values(CARDS).filter(x=>!isDue(x)).sort((a,b)=>a.due-b.due)[0];
+    view().innerHTML=`<h2>На сегодня всё</h2><div class="kpis">
+      <div class="kpi"><span class="eyebrow">Повторено</span><b>${R.done}</b><span class="small muted">карточек сейчас</span></div>
+      <div class="kpi"><span class="eyebrow">Вспомнила</span><b>${R.done?Math.round(R.good/R.done*100)+"%":"—"}</b><span class="small muted">с первого раза</span></div>
+      <div class="kpi"><span class="eyebrow">Всего слов</span><b>${total}</b><span class="small muted">в словаре</span></div></div>
+      <p class="note">${next?"Следующие карточки: "+new Date(next.due).toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"short"})+".":""} ${newToday()>=15?"Лимит 15 новых слов на сегодня набран, остальные новые придут завтра.":""}</p>
+      <div class="row"><button class="btn primary" data-tab-go="parse">Разобрать ещё текст</button><button class="btn" data-restart>Проверить ещё раз</button></div>`;
+    return;
+  }
+  const reverse=c.box>=3;                                  // после 3 удачных — русский → иврит
+  const front=reverse
+    ?`<div><div class="eyebrow" style="margin-bottom:10px">Вспомните на иврите</div><div class="qru">${esc(c.phrase_ru||c.ru)}</div>${c.phrase_ru?`<div class="small muted" style="margin-top:6px">слово: ${esc(c.ru)}</div>`:""}</div>`
+    :`<div><div class="eyebrow" style="margin-bottom:10px">Что значит выделенное?</div><div class="q">${c.phrase_he?highlight(c.phrase_he,c.he):`<b>${esc(c.he)}</b>`}</div></div>`;
+  const back=`<div class="ans"><div class="big">${esc(c.he)}</div><div class="ru" style="font-size:18px">${esc(c.ru)}</div>
+    ${c.phrase_he?`<div class="phrase"><div class="he" style="text-align:center">${esc(c.phrase_he)}</div><div class="small">${esc(c.phrase_ru)}</div></div>`:""}
+    ${c.example_he?`<div><div class="he" style="text-align:center;font-size:17px">${esc(c.example_he)}</div><div class="small muted">${esc(c.example_ru)}</div></div>`:""}
+    <div class="row" style="justify-content:center">${c.root?`<span class="root">${esc(c.root)}</span>`:""}${(c.family||[]).map(f=>`<span class="small"><b class="he">${esc(f.he)}</b> ${esc(f.ru)}</span>`).join(" · ")}</div>
+    ${c.tip_ru?`<div class="tip">${esc(c.tip_ru)}</div>`:""}</div>`;
+  view().innerHTML=`<div class="row" style="justify-content:space-between;margin-top:14px"><span class="small muted num">${R.i+1} / ${R.queue.length}</span><span class="row small muted">${!c.seen?'<span class="chip drop">новое</span>':""}${pips(c.box)}</span></div>
+  <div class="bar" style="margin-top:8px"><i style="width:${R.i/R.queue.length*100}%"></i></div>
+  <div class="panel flashcard" style="margin-top:12px" data-flip role="button" tabindex="0" aria-label="Показать ответ">${front}${R.flip?back:`<div class="small muted">Нажмите, чтобы проверить себя</div>`}</div>
+  ${R.flip?`<div class="grades"><button class="btn g0" data-grade="0">Не помню<small>покажу ещё сегодня</small></button><button class="btn" data-grade="1">Трудно<small>завтра</small></button><button class="btn g2" data-grade="2">Помню<small>через ${INTERVALS[Math.min(6,c.box+1)]} дн.</small></button></div>`:""}`;
+}
+function grade(g){
+  const c=R.queue[R.i]; if(!c) return;
+  if(!c.seen) c.firstSeen=Date.now();
+  c.seen=(c.seen||0)+1; R.done++;
+  if(g===0){c.box=0;c.due=Date.now();R.queue.push(c);}               // вернётся в конце сессии
+  else if(g===1){c.due=Date.now()+864e5;if(!R.again.includes(c.id))R.good++;}
+  else{c.box=Math.min(6,(c.box||0)+1);c.ok=(c.ok||0)+1;c.due=Date.now()+INTERVALS[c.box]*864e5;if(!R.again.includes(c.id))R.good++;}
+  if(g===0) R.again.push(c.id);
+  CARDS[c.id]=c; putDoc(c.id,c); R.i++; R.flip=false; updateBadge(); renderReview();
+}
+
+/* ============================================================
+   СЛОВАРЬ
+   ============================================================ */
+let Q="", delAsk=null;
+function renderDict(){
+  const all=Object.values(CARDS).sort((a,b)=>b.ts-a.ts);
+  const q=Q.trim().toLowerCase(), qp=plain(Q);
+  const list=all.filter(c=>!q||plain(c.he).includes(qp)||String(c.ru).toLowerCase().includes(q)||plain(c.root).replace(/־/g,"").includes(qp.replace(/־/g,"")));
+  const learned=all.filter(c=>c.box>=4).length;
+  view().innerHTML=`<h2>Мой словарь</h2>
+  <div class="kpis"><div class="kpi"><span class="eyebrow">Слов</span><b>${all.length}</b></div><div class="kpi"><span class="eyebrow">Выучено</span><b>${learned}</b><span class="small muted">коробка 4+ (держится неделю и дольше)</span></div><div class="kpi"><span class="eyebrow">К повтору сегодня</span><b>${dueCards().length}</b></div></div>
+  ${SAMPLE?`<div class="panel" style="margin-top:12px"><h3>Добавить одно слово</h3><div class="row"><input type="text" id="one" dir="rtl" lang="he" placeholder="מילה או צירוף" style="flex:1;min-width:160px;font-family:var(--f-he);font-size:18px"><button class="btn primary" id="one-go">Сделать карточку</button></div><div class="small muted" id="one-st" style="margin-top:6px">Claude подберёт перевод, корень, фразу и пример.</div></div>`:""}
+  <div class="row" style="margin-top:14px"><input type="search" id="q" placeholder="Поиск: слово, перевод или корень" value="${esc(Q)}" style="flex:1;min-width:200px"></div>
+  ${list.length?`<div class="tablebox panel" style="margin-top:12px;padding:6px 10px"><table><thead><tr><th>Слово</th><th>Перевод</th><th>Фраза</th><th>Корень</th><th>Знание</th><th></th></tr></thead><tbody>
+  ${list.map(c=>`<tr><td class="he">${esc(c.he)}</td><td>${esc(c.ru)}</td><td><div class="he" style="font-size:16px">${esc(c.phrase_he)}</div><div class="small muted">${esc(c.phrase_ru)}</div></td><td class="he" style="color:var(--drop)">${esc(c.root)}</td><td>${pips(c.box||0)}</td>
+  <td>${delAsk===c.id?`<span class="row" style="gap:6px"><button class="btn small" data-del-yes="${c.id}">Удалить</button><button class="btn ghost small" data-del-no>Нет</button></span>`:`<button class="btn ghost small" data-del="${c.id}" aria-label="Удалить ${esc(c.he)}">×</button>`}</td></tr>`).join("")}
+  </tbody></table></div>`:`<p class="muted" style="margin-top:12px">${all.length?"Ничего не нашлось.":"Словарь пуст. Разберите текст и добавьте слова."}</p>`}`;
+}
+async function addOne(){
+  const w=$("#one").value.trim(); if(!w) return;
+  const st=$("#one-st"),btn=$("#one-go"); btn.disabled=true; st.textContent="Claude готовит карточку…";
+  try{
+    const r=await SAMPLE.json(`Сделай учебную карточку для русскоязычной студентки (иврит бет–гимель, готовится к יע״ל) для слова или выражения на иврите: «${w}». Если это форма с приставками или спряжённая форма — дай словарную форму. Ответь только JSON: {"he":"словарная форма с огласовками","root":"корень через ־ или пустая строка","pos":"часть речи, биньян","ru":"перевод","phrase_he":"частая короткая фраза с этим словом, с огласовками","phrase_ru":"перевод фразы","example_he":"пример-предложение с огласовками","example_ru":"перевод","family":[{"he":"однокоренное слово","ru":"перевод"}],"tip_ru":"одна подсказка: ловушка, похожее слово или управление","yael":1}`,{modelTier:"quick",cache:false});
+    if(!r||!r.he||!r.ru) throw {code:"invalid_json"};
+    const c={id:uid("c_"),kind:"card",he:String(r.he),root:String(r.root||""),pos:String(r.pos||""),ru:String(r.ru),phrase_he:String(r.phrase_he||""),phrase_ru:String(r.phrase_ru||""),example_he:String(r.example_he||""),example_ru:String(r.example_ru||""),family:(Array.isArray(r.family)?r.family:[]).slice(0,4).map(f=>({he:String(f.he||""),ru:String(f.ru||"")})),tip_ru:String(r.tip_ru||""),yael:Math.max(1,Math.min(3,Math.round(+r.yael||2))),src:"manual",srcTitle:"вручную",box:0,due:Date.now(),seen:0,ok:0,ts:Date.now()};
+    CARDS[c.id]=c; putDoc(c.id,c); updateBadge(); toast("Карточка «"+plain(c.he)+"» добавлена"); renderDict();
+  }catch(e){st.textContent=sampleErr(e)||"Остановлено.";btn.disabled=false;}
+}
+
+/* ============================================================
+   МОИ ТЕКСТЫ
+   ============================================================ */
+let tDel=null;
+function renderTexts(){
+  const list=Object.values(TEXTS).sort((a,b)=>b.ts-a.ts);
+  view().innerHTML=`<h2>Мои тексты</h2>${list.length?`<div class="cards">${list.map(t=>{const n=Object.values(CARDS).filter(c=>c.src===t.id).length;
+    return `<div class="wcard"><div class="eyebrow">${new Date(t.ts).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}</div><div class="word" style="font-size:22px">${esc(t.title)}</div>
+    <div class="he small muted" style="font-size:15px">${esc(String(t.text).slice(0,110))}${t.text.length>110?"…":""}</div>
+    <div class="small muted">${t.words.length} слов разобрано · ${n} в карточках</div>
+    <div class="row"><button class="btn small primary" data-open="${t.id}">Открыть</button>${tDel===t.id?`<button class="btn small" data-tdel-yes="${t.id}">Удалить текст</button><button class="btn ghost small" data-tdel-no>Отмена</button>`:`<button class="btn ghost small" data-tdel="${t.id}">Удалить</button>`}</div></div>`;}).join("")}</div>
+    <p class="note">При удалении текста его карточки остаются в словаре.</p>`
+  :`<div class="panel"><p>Здесь будут все разобранные тексты. Можно вернуться и добавить слова, которые пропустили.</p><button class="btn primary" data-tab-go="parse">Разобрать первый текст</button></div>`}`;
+}
+
+/* ============================================================
+   НАВИГАЦИЯ И СОБЫТИЯ
+   ============================================================ */
+let TAB="parse";
+function go(tab){
+  TAB=tab;
+  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab));
+  try{localStorage.setItem(LS+"-tab",tab);}catch(e){}
+  if(tab==="review") R=null;
+  ({parse:renderParse,review:renderReview,dict:renderDict,texts:renderTexts})[tab]();
+  updateBadge(); window.scrollTo({top:0});
+}
+document.getElementById("tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]");if(b)go(b.dataset.tab);});
+view().addEventListener("click",e=>{
+  const t=e.target, f=s=>t.closest(s);
+  if(f("[data-tab-go]")){go(f("[data-tab-go]").dataset.tabGo);return;}
+  if(f("#go")){parse();return;}
+  if(f("[data-add]")){addPicked(f("[data-add]").dataset.add);return;}
+  const m=f("mark[data-jump]"); if(m){const el=document.getElementById("w"+m.dataset.jump);if(el){el.scrollIntoView({behavior:"smooth",block:"center"});el.classList.remove("flash");void el.offsetWidth;el.classList.add("flash");}return;}
+  if(TAB==="review"){
+    if(f("[data-grade]")){grade(+f("[data-grade]").dataset.grade);return;}
+    if(f("[data-flip]")&&!R.flip){R.flip=true;renderReview();return;}
+    if(f("[data-restart]")){R=null;startReview();if(!R.queue.length){R.queue=Object.values(CARDS).filter(c=>c.seen).sort(()=>Math.random()-.5).slice(0,15);}renderReview();return;}
+  }
+  if(TAB==="dict"){
+    if(f("#one-go")){addOne();return;}
+    if(f("[data-del]")){delAsk=f("[data-del]").dataset.del;renderDict();return;}
+    if(f("[data-del-no]")){delAsk=null;renderDict();return;}
+    if(f("[data-del-yes]")){const id=f("[data-del-yes]").dataset.delYes;delete CARDS[id];delDoc(id);delAsk=null;updateBadge();renderDict();return;}
+  }
+  if(TAB==="texts"){
+    if(f("[data-open]")){CUR=TEXTS[f("[data-open]").dataset.open];go("parse");setTimeout(()=>document.getElementById("result").scrollIntoView(),0);return;}
+    if(f("[data-tdel]")){tDel=f("[data-tdel]").dataset.tdel;renderTexts();return;}
+    if(f("[data-tdel-no]")){tDel=null;renderTexts();return;}
+    if(f("[data-tdel-yes]")){const id=f("[data-tdel-yes]").dataset.tdelYes;delete TEXTS[id];delDoc(id);if(CUR&&CUR.id===id)CUR=null;tDel=null;renderTexts();return;}
+  }
+});
+view().addEventListener("keydown",e=>{
+  if(TAB==="review"&&R&&R.queue[R.i]){
+    if((e.key==="Enter"||e.key===" ")&&!R.flip&&e.target.closest("[data-flip]")){e.preventDefault();R.flip=true;renderReview();}
+  }
+  if(e.target.id==="one"&&e.key==="Enter") addOne();
+});
+document.addEventListener("keydown",e=>{if(TAB==="review"&&R&&R.flip&&["1","2","3"].includes(e.key)&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName))grade(+e.key-1);});
+view().addEventListener("input",e=>{
+  if(e.target.id==="src"){const n=e.target.value.length,l=$("#len");l.textContent=n+" / 1500";l.style.color=n>1500?"var(--bad)":"";}
+  if(e.target.id==="q"){Q=e.target.value;const pos=e.target.selectionStart;renderDict();const q=$("#q");q.focus();q.setSelectionRange(pos,pos);}
+});
+view().addEventListener("change",e=>{
+  if(e.target.id==="img"){const file=e.target.files[0];if(!file)return;IMG=file;
+    const url=URL.createObjectURL(file);$("#imgbox").innerHTML=`<img class="thumb" src="${url}" alt="Фото текста"> <button class="btn ghost small" id="img-x">Убрать</button>`;}
+  if(e.target.dataset&&e.target.dataset.pick!==undefined){e.target.closest(".wcard").classList.toggle("picked",e.target.checked);}
+});
+view().addEventListener("click",e=>{if(e.target.id==="img-x"){IMG=null;$("#imgbox").innerHTML="";const i=$("#img");if(i)i.value="";}});
+
+/* ============================================================
+   ЗАПУСК
+   ============================================================ */
+let startTab="parse"; try{startTab=localStorage.getItem(LS+"-tab")||(dueCards().length?"review":"parse");}catch(e){}
+if(!["parse","review","dict","texts"].includes(startTab)) startTab="parse";
+go(startTab);
+
+(async()=>{
+  if(!window.claude||!window.claude.use) return;
+  const [db,user,sample]=await Promise.all([claude.use("db"),claude.use("user"),claude.use("sample")]);
+  SAMPLE=sample;
+  if(sample){try{const l=await sample.limits();CAN_IMG=!!(l&&l.images);}catch(e){CAN_IMG=false;}}
+  if(db&&user){
+    try{
+      UID=await user.id();
+      if(UID){
+        DB=db;
+        const snap=await db.collection("data/users/"+UID).limit(1000).get();
+        if(!snap.empty){
+          const c={},t={};
+          snap.docs.forEach(d=>{const v=d.data();if(!v)return;if(v.kind==="card")c[d.id]=v;else if(v.kind==="text")t[d.id]=v;});
+          CARDS=c;TEXTS=t;saveLocal();
+        }else{
+          // первый вход с аккаунтом: перенести то, что уже было в браузере
+          for(const v of Object.values(CARDS)) await db.doc("data/users/"+UID+"/"+v.id).set(v);
+          for(const v of Object.values(TEXTS)) await db.doc("data/users/"+UID+"/"+v.id).set(v);
+        }
+        setSync("Слова сохраняются в вашем аккаунте Claude");
+      }
+    }catch(e){DB=null;setSync("Сохраняю в этом браузере");}
+  }
+  // перерисовать, не сбивая ввод
+  const typing=document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName);
+  if(!typing&&!(TAB==="review"&&R&&R.i>0)){const src=$("#src");const keep=src?src.value:"";go(TAB);const s2=$("#src");if(s2&&keep)s2.value=keep;}
+})();
+</script>

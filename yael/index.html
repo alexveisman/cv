@@ -565,6 +565,8 @@ function renderHome(){
     <div class="panel"><h3>Сочинение</h3><p class="small muted">15 минут, тема как на экзамене. Claude оценит по 4 критериям NITE и исправит ошибки.</p><button class="btn primary" data-go="essay">Написать</button></div>
     <div class="panel"><h3>Связки</h3><p class="small muted">48 слов вроде <span class="he">אלא, אמנם, שכן, לולא</span>. Почти в каждом вопросе одно из них решает ответ.</p><button class="btn primary" data-go="cards">Учить</button></div>
   </div>
+  <h2>Слова из текстов</h2>
+  <div class="panel"><p>Отдельная страница <a href="https://claude.ai/artifact/Tn4fwE2FrsRZjx2cAtN14K" target="_blank" rel="noopener"><b>«Словарь из текстов»</b></a>: вставьте текст или фото на иврите, Claude разберёт его по предложениям и сделает карточки слов фразами, с корнями. Повторение идёт с интервалами.</p><a class="btn primary" href="https://claude.ai/artifact/Tn4fwE2FrsRZjx2cAtN14K" target="_blank" rel="noopener">Открыть словарь</a></div>
   <h2>Где читать на иврите</h2>
   <div class="grid2">
     <div class="panel"><div class="eyebrow">Сейчас · бет–гимель</div><h3><a href="https://hadshon.education.gov.il" target="_blank" rel="noopener">החדשון בעברית קלה</a></h3><p class="small muted">Новости на простом иврите для изучающих язык, от Министерства образования. Продолжение газеты «שער למתחיל».</p></div>
@@ -913,7 +915,7 @@ function tasksFor(date){
         :{id:"sc2",k:"sc",need:2,label:"Ещё один блок «Дополнение»",note:"Когда наберётся статистика, здесь появится ваша слабая тема.",start:"sc",min:15}];
   if(i===1) return [
     {id:"rc",k:"rc",need:1,label:"Текст с вопросами",note:"Сначала читайте вопрос, потом ищите строку.",start:"rc",min:20},
-    {id:"words",manual:true,label:"Выписать 10 новых слов из текста",note:"В тетрадь или заметки: слово, перевод, пример.",min:15},
+    {id:"words",manual:true,label:"Разобрать текст в «Словаре» и добавить 10 слов",note:"Страница «Словарь из текстов», ссылка на «Главной». Отметьте галочкой, когда сделаете.",min:15},
     {id:"cards",k:"cards",need:10,label:"10 карточек связок",note:"Повторение.",start:"cards",min:10}];
   if(i===2) return [
     {id:"essay",k:"essay",need:1,label:"Сочинение на время",note:SAMPLE?"15 минут, затем проверка Claude и разбор исправлений.":"15 минут. Отметьте галочкой, когда напишете.",start:"essay",min:45,manualOk:!SAMPLE}];
